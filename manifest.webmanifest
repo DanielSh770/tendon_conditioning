@@ -16,5 +16,26 @@
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Таймер удержаний", "short_name": "Таймер", "url": "./#timer",
+      "icons": [
+        { "src": "icons/shortcut-timer.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "icons/shortcut-timer-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
+      ]
+    },
+    {
+      "name": "Дневник занятий", "short_name": "Дневник", "url": "./#diary",
+      "icons": [
+        { "src": "icons/shortcut-diary.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "icons/shortcut-diary-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" }
+      ]
+    }
+  ],
+  "screenshots": [
+    { "src": "screenshots/book.jpg", "sizes": "780x1688", "type": "image/jpeg", "form_factor": "narrow", "label": "Оглавление: восемь глав и программа на 12 недель" },
+    { "src": "screenshots/timer.jpg", "sizes": "780x1688", "type": "image/jpeg", "form_factor": "narrow", "label": "Таймер удержаний с готовыми схемами" },
+    { "src": "screenshots/diary.jpg", "sizes": "780x1688", "type": "image/jpeg", "form_factor": "narrow", "label": "Дневник: усилие, подходы и боль до и после" }
   ]
 }

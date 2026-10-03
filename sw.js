@@ -1,4 +1,4 @@
-const CACHE = 'tendon-v1';
+const CACHE = 'tendon-v2';
 const SHELL = [
   './',
   './index.html',
