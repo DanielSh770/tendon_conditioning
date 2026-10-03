@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#edf1f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1a20" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Статические упражнения для сухожилий и гибкости: исследования, режимы, программа на 12 недель.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Сухожилия">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Сильные сухожилия</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Раскладка: читалка из трёх вкладок (книга, таймер удержаний, дневник); навигация внизу под большой палец. */
+:root {
+  --bg: #edf1f3;
+  --surface: #ffffff;
+  --ink: #13232c;
+  --muted: #566a75;
+  --line: #d2dce1;
+  --soft: #dcebea;
+  --accent: #0b6e66;
+  --accent-ink: #ffffff;
+  --warn: #a8480a;
+  --display: 'Unbounded', 'Segoe UI', system-ui, sans-serif;
+  --body: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --stk: 0px; --hdr-pt: env(safe-area-inset-top, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1a20; --surface: #15252d; --ink: #e5eef1; --muted: #9ab0ba; --line: #27404b;
+    --soft: #17353a; --accent: #4ccdbb; --accent-ink: #062521; --warn: #f0a35e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1a20; --surface: #15252d; --ink: #e5eef1; --muted: #9ab0ba; --line: #27404b;
+  --soft: #17353a; --accent: #4ccdbb; --accent-ink: #062521; --warn: #f0a35e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 16px; line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.top {
+  position: sticky; top: var(--stk); z-index: 5; background: var(--bg);
+  padding: var(--hdr-pt) 16px 10px; border-bottom: 1px solid var(--line);
+}
+.top-in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; min-height: 40px; }
+.brand { font-family: var(--display); font-weight: 700; font-size: .95rem; letter-spacing: .01em; }
+.back {
+  display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent;
+  color: var(--accent); font-weight: 600; padding: 8px 8px 8px 0; min-height: 40px;
+}
+main { max-width: 720px; margin: 0 auto; padding: 20px 16px calc(104px + env(safe-area-inset-bottom, 0px)); }
+.view[hidden] { display: none !important; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+.hero h1 { font-size: clamp(1.6rem, 7vw, 2.2rem); letter-spacing: -.01em; }
+.hero p { color: var(--muted); max-width: 52ch; margin: 12px 0 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 16px 0 0; color: var(--muted); font-size: .875rem; }
+.meta b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px;
+  padding: 0 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600;
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.block { width: 100%; }
+.cta { margin-top: 22px; }
+.toc { list-style: none; margin: 26px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.toc li { border-bottom: 1px solid var(--line); }
+.row {
+  width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; text-align: left;
+  background: transparent; border: 0; padding: 16px 0; align-items: start;
+}
+.num { font-family: var(--display); font-weight: 700; font-size: 1.35rem; color: var(--accent); line-height: 1.1; }
+.row-t { font-weight: 600; font-size: 1.0625rem; line-height: 1.3; }
+.row-l {
+  color: var(--muted); font-size: .9rem; margin-top: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.chap h2 { font-size: clamp(1.35rem, 6vw, 1.8rem); margin: 6px 0 18px; }
+.prose { font-size: 1.0625rem; line-height: 1.65; }
+.prose p, .prose ul, .prose ol { max-width: 65ch; margin: 0 0 1em; }
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose li { margin: .35em 0; }
+.prose li::marker { color: var(--accent); }
+.prose strong { font-weight: 600; }
+.prose a { color: var(--accent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; margin: 0 0 1.2em; background: var(--surface); }
+.tw table { border-collapse: collapse; min-width: 560px; width: 100%; font-size: .9rem; line-height: 1.45; }
+.tw th { text-align: left; background: var(--soft); font-weight: 600; white-space: nowrap; }
+.tw th, .tw td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tw tr:last-child td { border-bottom: 0; }
+.pager { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.pager .btn { flex: 1 1 140px; }
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--surface);
+  border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+}
+.tabbar-in { max-width: 720px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.tab {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; border: 0; background: transparent;
+  color: var(--muted); padding: 8px 4px; min-height: 56px; border-radius: 10px; font-size: .75rem; font-weight: 500;
+}
+.tab svg { width: 24px; height: 24px; }
+.tab[aria-current="page"] { color: var(--accent); background: var(--soft); font-weight: 600; }
+.sec-t { font-size: 1.25rem; }
+.sub { color: var(--muted); margin: 8px 0 0; max-width: 52ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 0 14px;
+  min-height: 40px; font-size: .875rem; font-weight: 500;
+}
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ringwrap { display: grid; place-items: center; margin: 22px 0 8px; }
+.ring { width: min(72vw, 280px); aspect-ratio: 1; position: relative; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .track { stroke: var(--line); }
+.ring .bar { stroke: var(--accent); transition: stroke .2s; }
+.ring[data-k="rest"] .bar, .ring[data-k="release"] .bar { stroke: var(--muted); }
+.ring[data-k="ramp"] .bar { stroke: var(--warn); }
+.ring-c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 4px; }
+.big { font-family: var(--display); font-weight: 700; font-size: clamp(3rem, 16vw, 4.4rem); line-height: 1; font-variant-numeric: tabular-nums; }
+.phase { font-weight: 600; }
+.setl { color: var(--muted); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.ctrl { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 10px; }
+.steppers { display: grid; gap: 10px; margin-top: 22px; }
+.step {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+}
+.step span { font-weight: 500; }
+.step small { display: block; color: var(--muted); font-weight: 400; }
+.stepc { display: flex; align-items: center; gap: 4px; }
+.stepc button {
+  width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 1.25rem; line-height: 1;
+}
+.stepc output { min-width: 3.4em; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.note { margin: 22px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--soft); font-size: .9rem; max-width: 65ch; }
+form.diary { display: grid; gap: 12px; margin-top: 18px; }
+.f { display: grid; gap: 4px; min-width: 0; }
+.f label { font-size: .8125rem; color: var(--muted); font-weight: 500; }
+.f input, .f select, .f textarea {
+  width: 100%; min-height: 46px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface);
+}
+.f textarea { min-height: 72px; resize: vertical; }
+.g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.log { list-style: none; margin: 14px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.log li { padding: 14px 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+.log .d { font-size: .8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.log .t { font-weight: 600; }
+.log .s { color: var(--muted); font-size: .9rem; grid-column: 1 / -1; font-variant-numeric: tabular-nums; }
+.log .n { grid-column: 1 / -1; font-size: .9rem; }
+.log .del { border: 0; background: transparent; color: var(--muted); min-height: 40px; padding: 0 6px; font-size: .8125rem; }
+.log .del.sure { color: var(--warn); font-weight: 600; }
+.pain-up { color: var(--warn); font-weight: 600; }
+.empty { color: var(--muted); padding: 18px 0; max-width: 52ch; }
+@media (max-width: 380px) { .g3 { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+
+<header class="top"><div class="top-in" id="top"></div></header>
+
+<main>
+  <section class="view" id="v-book" hidden></section>
+  <section class="view" id="v-chap" hidden></section>
+
+  <section class="view" id="v-timer" hidden>
+    <h2 class="sec-t">Таймер удержаний</h2>
+    <p class="sub">Нарастание усилия, удержание и отдых по заданной схеме. Экран остаётся включённым, звук и вибрация подскажут смену фаз.</p>
+    <div class="chips" id="presets" role="group" aria-label="Готовые схемы">
+      <button class="chip" data-p="10,2,90" type="button">Этап 1 · 10 с</button>
+      <button class="chip" data-p="15,3,90" type="button">Этап 2 · 15 с</button>
+      <button class="chip" data-p="20,4,90" type="button">Этап 3–4 · 20 с</button>
+      <button class="chip" data-p="45,5,120" type="button">Боль · 45 с</button>
+    </div>
+    <div class="ringwrap">
+      <div class="ring" id="ring" data-k="idle">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="track" cx="60" cy="60" r="54" fill="none" stroke-width="8"></circle>
+          <circle class="bar" id="bar" cx="60" cy="60" r="54" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292"></circle>
+        </svg>
+        <div class="ring-c" role="timer" aria-live="off">
+          <div class="big" id="big">20</div>
+          <div class="phase" id="phase">Готовы начать</div>
+          <div class="setl" id="setl">Подход 1 из 3</div>
+        </div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button class="btn primary" id="go" type="button">Старт</button>
+      <button class="btn" id="reset" type="button">Сброс</button>
+    </div>
+    <div class="steppers">
+      <div class="step"><span>Удержание<small>секунд</small></span>
+        <div class="stepc"><button type="button" data-s="hold" data-d="-5" aria-label="Удержание меньше">−</button><output id="o-hold">20</output><button type="button" data-s="hold" data-d="5" aria-label="Удержание больше">+</button></div></div>
+      <div class="step"><span>Подходы<small>штук</small></span>
+        <div class="stepc"><button type="button" data-s="sets" data-d="-1" aria-label="Подходов меньше">−</button><output id="o-sets">3</output><button type="button" data-s="sets" data-d="1" aria-label="Подходов больше">+</button></div></div>
+      <div class="step"><span>Отдых<small>секунд между подходами</small></span>
+        <div class="stepc"><button type="button" data-s="rest" data-d="-15" aria-label="Отдых меньше">−</button><output id="o-rest">90</output><button type="button" data-s="rest" data-d="15" aria-label="Отдых больше">+</button></div></div>
+    </div>
+    <p class="note">Усилие около 70% от максимума: вы держите ровно, дышите спокойно и не доводите мышцу до дрожи. Если боль в сухожилии растёт, остановитесь.</p>
+  </section>
+
+  <section class="view" id="v-diary" hidden>
+    <h2 class="sec-t">Дневник занятий</h2>
+    <p class="sub">Записи хранятся только на этом телефоне.</p>
+    <form class="diary" id="form" autocomplete="off">
+      <div class="g2">
+        <div class="f"><label for="d-date">Дата</label><input id="d-date" type="date" required></div>
+        <div class="f"><label for="d-zone">Зона</label>
+          <select id="d-zone">
+            <option>Икры и ахиллово сухожилие</option><option>Колени и бёдра</option><option>Задняя поверхность бедра</option>
+            <option>Сгибатели бедра</option><option>Корпус</option><option>Плечи и грудь</option><option>Спина и бицепс</option>
+            <option>Предплечья и запястья</option><option>Другое</option>
+          </select></div>
+      </div>
+      <div class="g3">
+        <div class="f"><label for="d-eff">Усилие, 1–10</label><input id="d-eff" type="number" inputmode="numeric" min="1" max="10" value="7"></div>
+        <div class="f"><label for="d-hold">Удержание, с</label><input id="d-hold" type="number" inputmode="numeric" min="1" max="120" value="20"></div>
+        <div class="f"><label for="d-sets">Подходов</label><input id="d-sets" type="number" inputmode="numeric" min="1" max="20" value="3"></div>
+      </div>
+      <div class="g2">
+        <div class="f"><label for="d-pb">Боль до, 0–10</label><input id="d-pb" type="number" inputmode="numeric" min="0" max="10" value="0"></div>
+        <div class="f"><label for="d-pa">Боль после, 0–10</label><input id="d-pa" type="number" inputmode="numeric" min="0" max="10" value="0"></div>
+      </div>
+      <div class="f"><label for="d-note">Заметка</label><textarea id="d-note" maxlength="300"></textarea></div>
+      <button class="btn primary block" type="submit">Сохранить запись</button>
+    </form>
+    <div id="sum" class="sub"></div>
+    <ul class="log" id="log"></ul>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Разделы">
+  <div class="tabbar-in">
+    <button class="tab" data-t="book" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16M8 7h8"/></svg>Книга</button>
+    <button class="tab" data-t="timer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 2M9.5 2.5h5"/></svg>Таймер</button>
+    <button class="tab" data-t="diary" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Дневник</button>
+  </div>
+</nav>
+
+<script>
+(function () {
+  var CH = [{"n": 1, "title": "Что такое сила сухожилий и зачем она нужна", "lead": "Сухожилие передаёт усилие мышцы на кость, поэтому сила и скорость движения упираются не только в мышцу, но и в то, насколько жёстко и прочно это соединение.", "html": "<p>Сухожилие передаёт усилие мышцы на кость, поэтому сила и скорость движения упираются не только в мышцу, но и в то, насколько жёстко и прочно это соединение.<\/p>\n<p><strong>Три свойства, о которых пойдёт речь:<\/strong><\/p>\n<ul>\n<li><strong>Жёсткость (stiffness)<\/strong> — насколько сухожилие сопротивляется растяжению под нагрузкой. Чем оно жёстче, тем быстрее и точнее мышца передаёт усилие.<\/li>\n<li><strong>Прочность<\/strong> — какую нагрузку сухожилие выдерживает до повреждения.<\/li>\n<li><strong>Гибкость<\/strong> — подвижность в суставе. Она зависит от длины мышц, растяжимости тканей и от того, как нервная система «разрешает» тянуться.<\/li>\n<\/ul>\n<p><strong>Почему статика.<\/strong> Изометрическое упражнение — это напряжение без движения: вы давите или тянете против неподвижной опоры. Суставный угол не меняется, нагрузку легко дозировать, а техника проще, чем у динамических упражнений. Статическое растяжение — это удержание позы на пределе комфортной растяжки. Обе техники объединяет одно: они не требуют ни рывков, ни ударных нагрузок.<\/p>\n<p><strong>Что вы получите, если выполнять систему регулярно:<\/strong><\/p>\n<ul>\n<li>рост жёсткости сухожилий и силы в тех углах сустава, где вы тренировались;<\/li>\n<li>прирост подвижности в суставах, которые вы растягиваете;<\/li>\n<li>удобный способ начать нагрузку, когда динамические упражнения пока слишком тяжёлые или болезненные.<\/li>\n<\/ul>\n<p><strong>Чего система не обещает.<\/strong> Она не заменяет врача при травме, не гарантирует результат за неделю и не делает сухожилия «неуязвимыми». Сухожилия адаптируются медленно — заметный эффект в исследованиях появлялся через 6–12 недель.<\/p>", "short": "Глава 1"}, {"n": 2, "title": "Что показывают исследования", "lead": "Изометрические тренировки в нескольких исследованиях повышали жёсткость сухожилий на 30–60% за 6–12 недель, но результат зависит от нагрузки, длительности удержания и конкретного сухожилия.", "html": "<p>Изометрические тренировки в нескольких исследованиях повышали жёсткость сухожилий на 30–60% за 6–12 недель, но результат зависит от нагрузки, длительности удержания и конкретного сухожилия.<\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Исследование<\/th>\n<th>Протокол<\/th>\n<th>Результат<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td><a href=\"https://pubmed.ncbi.nlm.nih.gov/11408409/\">Kubo и др., 2001<\/a><\/td>\n<td>12 недель, 4 дня в неделю, разгибание колена, 70% от максимума, 4 подхода по 20 с<\/td>\n<td>Жёсткость сухожилий выросла с 67,5 до 106,2 Н/мм, максимальный момент силы — примерно на 34%<\/td>\n<\/tr>\n<tr>\n<td><a href=\"https://www.proquest.com/docview/213102826\">Burgess и др., 2007<\/a><\/td>\n<td>6 недель, изометрика для голеностопа против плиометрики<\/td>\n<td>Жёсткость сухожилия икроножной мышцы: +61,6% при изометрике и +29,4% при плиометрике; скорость нарастания силы выросла сопоставимо<\/td>\n<\/tr>\n<tr>\n<td><a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC2278867/\">Kubo и др., сравнение длительности<\/a><\/td>\n<td>Изометрика с длинными и короткими сокращениями<\/td>\n<td>Жёсткость выросла сильнее при более долгих сокращениях<\/td>\n<\/tr>\n<tr>\n<td><a href=\"https://doaj.org/article/45403330fb9249b3b8101b3bd753bc58\">Waugh и Scott, 2021<\/a><\/td>\n<td>12 недель изометрики для икроножных мышц<\/td>\n<td>Жёсткость ахиллова сухожилия выросла примерно на 31%, но при ходьбе функция сухожилия не изменилась<\/td>\n<\/tr>\n<tr>\n<td><a href=\"https://lida.sport-iat.de/ta/Record/4064150?lng=en\">Kubo и др., 2006<\/a><\/td>\n<td>12 недель изометрического приседа, 10 подходов по 15 с<\/td>\n<td>Жёсткость комплекса «сухожилие + апоневроз» выросла, жёсткость сухожилия надколенника не изменилась<\/td>\n<\/tr>\n<tr>\n<td><a href=\"https://openresearch.lsbu.ac.uk/item/97257\">Lambrianides и др., 2024<\/a><\/td>\n<td>12 недель циклической изометрики до отказа<\/td>\n<td>Сухожилие не приспособилось при высоком метаболическом стрессе: оно реагирует на величину натяжения, а не на утомление мышцы<\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p><strong>Что из этого следует:<\/strong><\/p>\n<ul>\n<li><strong>Долгие удержания работают лучше коротких.<\/strong> При прочих равных более длинные сокращения сильнее повышали жёсткость.<\/li>\n<li><strong>Важна нагрузка, а не изнурение.<\/strong> Тренировка «до отказа» не давала лишнего эффекта для сухожилия, зато могла создавать дисбаланс: мышца растёт быстрее, чем подстраивается сухожилие.<\/li>\n<li><strong>Эффект зависит от сухожилия.<\/strong> Ахиллово сухожилие откликается надёжнее, чем сухожилие надколенника в упражнении на приседание.<\/li>\n<li><strong>Жёсткость — не самоцель.<\/strong> Рост показателя в лаборатории не обязательно меняет, как сухожилие работает при ходьбе.<\/li>\n<\/ul>\n<p>Обзор в British Journal of Sports Medicine даёт два практических вывода: <a href=\"https://bjsm.bmj.com/content/48/Suppl_2/A14.1.full.pdf\">изометрика с 70% от максимума в течение 12 недель надёжно повышает жёсткость<\/a> в мышце-разгибателе колена, а у уже повреждённых сухожилий данных об адаптации пока мало (всего два исследования).<\/p>", "short": "Глава 2"}, {"n": 3, "title": "Изометрика на практике", "lead": "Для жёсткости сухожилий берите около 70% от максимального усилия и держите 15–20 секунд; для быстрого снижения боли в сухожилии держите 45 секунд, но и то и другое — только в безболезненном диапазоне.", "html": "<p>Для жёсткости сухожилий берите около 70% от максимального усилия и держите 15–20 секунд; для быстрого снижения боли в сухожилии держите 45 секунд, но и то и другое — только в безболезненном диапазоне.<\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Цель<\/th>\n<th>Усилие<\/th>\n<th>Удержание<\/th>\n<th>Подходы<\/th>\n<th>Частота<\/th>\n<th>На чём основано<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>Жёсткость и сила сухожилий<\/td>\n<td>около 70% от максимума<\/td>\n<td>15–20 с<\/td>\n<td>4–10<\/td>\n<td>3–4 дня в неделю, 12 недель<\/td>\n<td><a href=\"https://pubmed.ncbi.nlm.nih.gov/11408409/\">Kubo и др., 2001<\/a>, <a href=\"https://lida.sport-iat.de/ta/Record/4064150?lng=en\">2006<\/a><\/td>\n<\/tr>\n<tr>\n<td>Временное облегчение боли в сухожилии<\/td>\n<td>около 70% от максимума<\/td>\n<td>45 с<\/td>\n<td>5, отдых до 2 мин<\/td>\n<td>перед нагрузкой или несколько раз в день<\/td>\n<td><a href=\"https://www.iasp-pain.org/publications/relief-news/article/isometrics-tendon-pain/\">Rio и др.<\/a>, <a href=\"https://healthonline.washington.edu/sites/default/files/record_pdfs/Isometric-Exercises-Patellar-Tendinopathy.pdf\">UW Medicine<\/a><\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p>В исследовании на волейболистах с болью в сухожилии надколенника один такой сеанс <a href=\"https://www.physiotutors.com/isometrics-in-tendinopathy-a-wonder-weapon-to-decrease-pain/\">снижал боль примерно с 7 из 10 почти до нуля, эффект держался не менее 45 минут<\/a>. Это обезболивающий приём на короткое время, а не лечение: авторы исследований не рекомендуют использовать его как долгосрочное решение.<\/p>\n<p><strong>Как выполнять одно удержание:<\/strong><\/p>\n<ol>\n<li>Займите позу, где сустав согнут под удобным углом, а опора неподвижна: стена, дверной косяк, ремень вокруг стопы, тяжёлая гиря, пол.<\/li>\n<li>Нарастите усилие плавно за 3–5 секунд. Не бейте в опору рывком.<\/li>\n<li>Держите ровное усилие. Дышите спокойно, не задерживайте дыхание.<\/li>\n<li>Так же плавно снимите нагрузку. Отдыхайте 1–2 минуты между подходами.<\/li>\n<li>Начните с половины усилия и 10 секунд, а к 70% и 20 секундам приходите за 2–4 недели.<\/li>\n<\/ol>\n<p><strong>Правила безопасности для сухожилий:<\/strong><\/p>\n<ul>\n<li>Упражнение должно быть тяжёлым, но не болезненным. Если боль растёт во время или после занятия, остановитесь, как советует <a href=\"https://healthonline.washington.edu/sites/default/files/record_pdfs/Isometric-Exercises-Patellar-Tendinopathy.pdf\">инструкция UW Medicine<\/a>.<\/li>\n<li>Сухожилия не любят сжатия. Выбирайте положения, где сухожилие не прижато к кости или краю мышцы, например не пережимайте его глубоким сгибанием сустава под нагрузкой.<\/li>\n<li>Дрожь в мышце при 45-секундном удержании — повод снизить усилие, а не стиснуть зубы.<\/li>\n<li>Не тренируйтесь до отказа: для сухожилия важна величина нагрузки, а не изнурение мышцы.<\/li>\n<\/ul>\n<p><strong>Историческая справка.<\/strong> Идею сочетать статическое напряжение с динамикой популярно связывают с цирковым силачом Александром Зассом, который пришёл к ней опытным путём. Современные исследования подтверждают принцип, но не его конкретные упражнения, поэтому в этой книге дозировки взяты из лабораторных протоколов.<\/p>", "short": "Глава 3"}, {"n": 4, "title": "Гибкость: сколько растягиваться", "lead": "Гибкость растёт уже от 10 минут растяжки на группу мышц в неделю, а больше этого предела выигрыша почти нет, поэтому важнее регулярность, чем длина занятия.", "html": "<p>Гибкость растёт уже от 10 минут растяжки на группу мышц в неделю, а больше этого предела выигрыша почти нет, поэтому важнее регулярность, чем длина занятия.<\/p>\n<p>Мета-анализ 2025 года в Sports Medicine свёл данные <a href=\"https://lida.sport-iat.de/ta/Record/4092909?lng=en\">сотен исследований<\/a> и показал: разовая статическая растяжка умеренно повышает подвижность, а регулярные занятия дают заметно больший эффект. Прирост перестаёт расти примерно на 4 минутах за занятие и 10 минутах в неделю на группу мышц. Интенсивность, частота, возраст, пол и уровень подготовки результат не меняли, а у людей с низкой гибкостью прогресс был больше. Пресс-релиз <a href=\"https://unisa.edu.au/media-centre/Releases/2024/improving-flexibility-isnt-that-much-of-a-stretch--all-it-takes-is-eight-minutes-per-week\">Университета Южной Австралии<\/a> по более раннему варианту анализа называл чуть меньшие цифры: около 3 минут за занятие и 8 минут в неделю. Разница небольшая, ориентир один: несколько минут в неделю на группу мышц.<\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Параметр<\/th>\n<th>Рекомендация<\/th>\n<th>Откуда<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>Удержание одной позы<\/td>\n<td>около 30 с<\/td>\n<td>В <a href=\"https://www.painscience.com/biblio/hamstring-flexibility-unaffected-by-more-static-stretching.html\">исследовании подколенных сухожилий<\/a> удержание 60 с не дало больше, чем 30 с<\/td>\n<\/tr>\n<tr>\n<td>Объём на группу мышц<\/td>\n<td>4 мин за занятие, не более 10 мин в неделю<\/td>\n<td><a href=\"https://lida.sport-iat.de/ta/Record/4092909?lng=en\">Мета-анализ 2025 года<\/a><\/td>\n<\/tr>\n<tr>\n<td>Частота<\/td>\n<td>3–5 дней в неделю, объём можно набирать любыми порциями<\/td>\n<td><a href=\"https://unisa.edu.au/media-centre/Releases/2024/improving-flexibility-isnt-that-much-of-a-stretch--all-it-takes-is-eight-minutes-per-week\">UniSA<\/a><\/td>\n<\/tr>\n<tr>\n<td>Повторы в день<\/td>\n<td>одного занятия на группу достаточно<\/td>\n<td><a href=\"https://www.painscience.com/biblio/hamstring-flexibility-unaffected-by-more-static-stretching.html\">Исследование подколенных сухожилий<\/a>: рост от 1 до 3 растяжек в день ничего не добавил<\/td>\n<\/tr>\n<tr>\n<td>Интенсивность<\/td>\n<td>до ясного ощущения натяжения, но без боли<\/td>\n<td>Исследователи UniSA советуют не доводить растяжку до боли<\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p><strong>Как растягиваться:<\/strong><\/p>\n<ol>\n<li>Сначала разогрейтесь 5 минут лёгкой ходьбой или суставной разминкой.<\/li>\n<li>Войдите в позу плавно, без пружинистых движений.<\/li>\n<li>Остановитесь там, где натяжение явное, но терпимое. Боли и онемения быть не должно.<\/li>\n<li>Держите 30 секунд, дышите ровно. На выдохе можно чуть углубить позу.<\/li>\n<li>Повторите 2 раза на каждую сторону. Это уже примерно минута на мышцу.<\/li>\n<\/ol>\n<p><strong>Что ещё полезно знать:<\/strong><\/p>\n<ul>\n<li>Растяжку до тренировки можно делать: <a href=\"https://train.fitness/personal-trainer-blogs/how-long-should-clients-hold-each-stretch\">утверждение, что любая статика перед нагрузкой вредит, оказалось преувеличенным<\/a>. Но тяжёлую изометрику лучше ставить после разминки, а не после долгой растяжки.<\/li>\n<li>Растяжку удобно ставить после изометрики: мышцы тёплые, а нагрузки на сухожилие уже сделаны.<\/li>\n<li>Серия работ Konstantin Warneke и коллег показывает, что очень долгая растяжка (15 минут и больше в день на мышцу) может даже увеличивать размер мышцы. Это перспективное, но пока менее изученное направление, и в программу книги оно не включено.<\/li>\n<\/ul>", "short": "Глава 4"}, {"n": 5, "title": "Комплексы упражнений", "lead": "Каждой зоне тела соответствует одно изометрическое упражнение и одна статическая растяжка, и вместе они занимают около 20 минут.", "html": "<p>Каждой зоне тела соответствует одно изометрическое упражнение и одна статическая растяжка, и вместе они занимают около 20 минут.<\/p>\n<p>Дозировки берите из глав 3 и 4: изометрика — по 15–20 секунд при усилии около 70%, растяжка — по 30 секунд. Список составлен автором книги как практическая подборка и опирается на принципы из исследований, а не на единый протокол.<\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Зона<\/th>\n<th>Изометрика<\/th>\n<th>Растяжка<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>Икры и ахиллово сухожилие<\/td>\n<td>Подъём на носки у стены и удержание в верхней точке, затем в середине амплитуды<\/td>\n<td>Выпад к стене с прямой задней ногой, пятка прижата<\/td>\n<\/tr>\n<tr>\n<td>Колени и бёдра<\/td>\n<td>«Стульчик» у стены, угол в коленях 60–90°, спина прижата к стене<\/td>\n<td>Квадрицепс стоя: стопа к ягодице, колени рядом, таз подан вперёд<\/td>\n<\/tr>\n<tr>\n<td>Задняя поверхность бедра<\/td>\n<td>Лёжа на спине, колено чуть согнуто, пятка давит в пол<\/td>\n<td>Нога на опоре, спина прямая, наклон от бедра<\/td>\n<\/tr>\n<tr>\n<td>Сгибатели бедра<\/td>\n<td>Лёжа, мяч между коленями, давление коленями друг в друга<\/td>\n<td>Глубокий выпад, колено задней ноги на полу, таз подан вперёд<\/td>\n<\/tr>\n<tr>\n<td>Корпус<\/td>\n<td>Планка на предплечьях, затем боковая планка<\/td>\n<td>Поза ребёнка, лёжа, руки вытянуты вперёд<\/td>\n<\/tr>\n<tr>\n<td>Плечи и грудь<\/td>\n<td>Руки в дверной проём, давление ладонями наружу на уровне плеч<\/td>\n<td>Предплечье на косяке, шаг вперёд, грудь раскрыта<\/td>\n<\/tr>\n<tr>\n<td>Спина и бицепс<\/td>\n<td>Ремень под стопами, тяга к себе при согнутых локтях, поза не меняется<\/td>\n<td>Рука на опоре, наклон вперёд, лопатка вытянута вперёд<\/td>\n<\/tr>\n<tr>\n<td>Предплечья и запястья<\/td>\n<td>Ладони вместе перед грудью, давление друг в друга<\/td>\n<td>Ладонь вперёд, пальцы тянет вторая рука, затем тыльная сторона<\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p><strong>Порядок занятия:<\/strong><\/p>\n<ol>\n<li>Разминка 5 минут: ходьба, круги в суставах.<\/li>\n<li>Изометрика: 1–2 упражнения на зону, 2–4 подхода.<\/li>\n<li>Растяжка: те же зоны, 2 подхода по 30 секунд.<\/li>\n<li>Заминка 2–3 минуты спокойного дыхания.<\/li>\n<\/ol>\n<p><strong>Если сустав уже болит.<\/strong> Для сухожилия, которое беспокоит, берите изометрику с меньшим усилием и в безболезненном диапазоне и не растягивайте больное место до боли. Сомневаетесь — сначала к врачу (глава 7).<\/p>", "short": "Глава 5"}, {"n": 6, "title": "Программа на 12 недель", "lead": "Программа поднимается от половины усилия к 70% за три этапа, потому что именно 12 недель использовали в большинстве исследований жёсткости сухожилий.", "html": "<p>Программа поднимается от половины усилия к 70% за три этапа, потому что именно 12 недель использовали в большинстве исследований жёсткости сухожилий.<\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Этап<\/th>\n<th>Недели<\/th>\n<th>Усилие<\/th>\n<th>Удержание<\/th>\n<th>Подходов<\/th>\n<th>Дней изометрики в неделю<\/th>\n<th>Растяжка<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>1. Вход<\/td>\n<td>1–2<\/td>\n<td>около 50%<\/td>\n<td>10 с<\/td>\n<td>2–3<\/td>\n<td>3<\/td>\n<td>1 × 30 с, 3–5 дней<\/td>\n<\/tr>\n<tr>\n<td>2. Набор<\/td>\n<td>3–6<\/td>\n<td>около 60%<\/td>\n<td>15 с<\/td>\n<td>3<\/td>\n<td>3<\/td>\n<td>2 × 30 с, 4–5 дней<\/td>\n<\/tr>\n<tr>\n<td>3. Основной<\/td>\n<td>7–10<\/td>\n<td>около 70%<\/td>\n<td>20 с<\/td>\n<td>3–4<\/td>\n<td>3–4<\/td>\n<td>2 × 30 с, 4–5 дней<\/td>\n<\/tr>\n<tr>\n<td>4. Закрепление<\/td>\n<td>11–12<\/td>\n<td>около 70%<\/td>\n<td>20 с<\/td>\n<td>4<\/td>\n<td>3–4<\/td>\n<td>2 × 30 с, 4–5 дней<\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p><strong>Как выглядит неделя на этапах 3–4:<\/strong><\/p>\n<ul>\n<li>Пн, ср, пт: разминка, изометрика по зонам из главы 5, растяжка.<\/li>\n<li>Вт, чт: только растяжка, 10–15 минут.<\/li>\n<li>Сб: по желанию облегчённое занятие или прогулка.<\/li>\n<li>Вс: отдых.<\/li>\n<\/ul>\n<p><strong>Правила прогрессии:<\/strong><\/p>\n<ul>\n<li>Переходите на следующий этап, только если прошлый закончился без боли в сухожилиях на следующий день.<\/li>\n<li>Нагрузку повышайте по одному параметру за раз: сначала удержание, потом усилие.<\/li>\n<li>Если неделя вышла тяжёлой или вы болели, повторите её, а не перескакивайте.<\/li>\n<li>Оценку усилия в процентах можно делать «на ощущение»: 70% — это когда вы держите 20 секунд ровно и ещё могли бы продолжить, но уже чувствуете напряжение.<\/li>\n<\/ul>\n<p><strong>После 12 недель.<\/strong> Пройдите самопроверку из главы 8. Дальше можно перейти на поддержку: растяжка по 10 минут в неделю на группу мышц (по данным мета-анализа, больше для гибкости не требуется) и изометрика два раза в неделю в удобном для вас режиме.<\/p>", "short": "Глава 6"}, {"n": 7, "title": "Безопасность и типичные ошибки", "lead": "Книга не заменяет консультацию врача или физиотерапевта: при травме, постоянной боли или хроническом заболевании сначала получите их оценку.", "html": "<p>Книга не заменяет консультацию врача или физиотерапевта: при травме, постоянной боли или хроническом заболевании сначала получите их оценку.<\/p>\n<p><strong>К врачу, не откладывая:<\/strong><\/p>\n<ul>\n<li>резкая боль, щелчок или «выстрел» в области сухожилия во время нагрузки;<\/li>\n<li>отёк, покраснение, гематома или заметное изменение формы сухожилия;<\/li>\n<li>онемение, покалывание или слабость в конечности;<\/li>\n<li>боль в покое или по ночам, которая не проходит несколько дней;<\/li>\n<li>невозможность опереться на ногу или поднять руку.<\/li>\n<\/ul>\n<p><strong>Нужно согласовать с врачом заранее:<\/strong><\/p>\n<ul>\n<li>повышенное давление и болезни сердца: изометрические удержания при задержке дыхания могут резко повышать давление, поэтому дышите ровно и берите меньшее усилие;<\/li>\n<li>недавние операции, переломы, растяжения;<\/li>\n<li>уже диагностированная тендинопатия. По обзору в BJSM <a href=\"https://bjsm.bmj.com/content/48/Suppl_2/A14.1.full.pdf\">данных об адаптации повреждённых сухожилий пока мало<\/a>, поэтому программу для такого сухожилия должен подбирать специалист.<\/li>\n<\/ul>\n<p><strong>Типичные ошибки:<\/strong><\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Ошибка<\/th>\n<th>Почему плохо<\/th>\n<th>Что делать<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>Задержка дыхания<\/td>\n<td>Скачок давления, головокружение<\/td>\n<td>Дышать ровно, считать вслух<\/td>\n<\/tr>\n<tr>\n<td>Рывок в начале удержания<\/td>\n<td>Ударная нагрузка на сухожилие<\/td>\n<td>Нарастать плавно 3–5 секунд<\/td>\n<\/tr>\n<tr>\n<td>Работа до отказа<\/td>\n<td>Мышца растёт быстрее сухожилия, по данным <a href=\"https://openresearch.lsbu.ac.uk/item/97257\">Lambrianides и др., 2024<\/a><\/td>\n<td>Оставлять запас, не доводить мышцу до дрожи<\/td>\n<\/tr>\n<tr>\n<td>Растяжка через боль<\/td>\n<td>Не даёт лишнего, а риск растёт<\/td>\n<td>Остановиться на терпимом натяжении<\/td>\n<\/tr>\n<tr>\n<td>Растяжка на холодные мышцы<\/td>\n<td>Выше риск перенапряжения<\/td>\n<td>Сначала 5 минут разминки<\/td>\n<\/tr>\n<tr>\n<td>Резкий рост нагрузки<\/td>\n<td>Сухожилия адаптируются медленнее мышц<\/td>\n<td>Менять один параметр за раз<\/td>\n<\/tr>\n<tr>\n<td>Гнаться за одним показателем<\/td>\n<td>Лабораторная жёсткость не равна пользе в движении, как видно из <a href=\"https://doaj.org/article/45403330fb9249b3b8101b3bd753bc58\">исследования Waugh и Scott<\/a><\/td>\n<td>Оценивать общее самочувствие и функцию<\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p><strong>Простое правило боли.<\/strong> Лёгкий дискомфорт или мышечное напряжение во время упражнения допустимы. Боль, которая нарастает в процессе или остаётся хуже на следующий день, означает «снизить нагрузку или остановиться».<\/p>", "short": "Глава 7"}, {"n": 8, "title": "Самопроверка", "lead": "Измеряйте прогресс простыми тестами в начале, на шестой и на двенадцатой неделе, а ежедневные заметки ведите во вкладке «Дневник».", "html": "<p>Измеряйте прогресс простыми тестами в начале, на шестой и на двенадцатой неделе, а ежедневные заметки ведите во вкладке «Дневник».<\/p>\n<div class=\"tw\"><table>\n<thead>\n<tr>\n<th>Тест<\/th>\n<th>Как измерить<\/th>\n<\/tr>\n<\/thead>\n<tbody>\n<tr>\n<td>Наклон вперёд<\/td>\n<td>Стоя, ноги прямые, расстояние от кончиков пальцев до пола, см<\/td>\n<\/tr>\n<tr>\n<td>Колено к стене<\/td>\n<td>Стопа от стены на расстоянии, при котором колено ещё касается стены, пятка на полу, см<\/td>\n<\/tr>\n<tr>\n<td>Стульчик у стены<\/td>\n<td>Время удержания угла 90° до заметной дрожи, секунды (остановитесь заранее, не до отказа)<\/td>\n<\/tr>\n<tr>\n<td>Планка на предплечьях<\/td>\n<td>Время с ровной спиной, секунды<\/td>\n<\/tr>\n<\/tbody>\n<\/table><\/div>\n<p><strong>Как читать результаты:<\/strong><\/p>\n<ul>\n<li>Растёт дальность наклона и «колено к стене» — гибкость прогрессирует.<\/li>\n<li>Растёт время «стульчика» и планки при той же технике — сила в статике выросла.<\/li>\n<li>Боль после занятий не растёт от недели к неделе. Если растёт, вернитесь на этап назад.<\/li>\n<li>Прогресс за 2–4 недели может быть незаметен: исследования видели изменения жёсткости сухожилий за 6–12 недель.<\/li>\n<\/ul>", "short": "Глава 8"}, {"n": null, "title": "Источники", "lead": "Книга написана своими словами на основе перечисленных работ; примеры упражнений в главе 5 и недельная схема в главе 6 составлены автором книги и не взяты из одного источника.", "html": "<p>Книга написана своими словами на основе перечисленных работ; примеры упражнений в главе 5 и недельная схема в главе 6 составлены автором книги и не взяты из одного источника.<\/p>\n<p><strong>Сухожилия и изометрика<\/strong><\/p>\n<ul>\n<li><a href=\"https://pubmed.ncbi.nlm.nih.gov/11408409/\">Kubo и др. (2001). Effects of isometric training on the elasticity of human tendon structures in vivo<\/a>, J Appl Physiol<\/li>\n<li><a href=\"https://pmc.ncbi.nlm.nih.gov/articles/PMC2278867/\">Effects of different duration isometric contractions on tendon elasticity in human quadriceps muscles<\/a><\/li>\n<li><a href=\"https://www.proquest.com/docview/213102826\">Burgess и др. (2007). Effect of plyometric and isometric training on tendon stiffness<\/a> и <a href=\"https://www.physoc.org/abstracts/training-rate-of-force-development-and-tendon-stiffness/\">тезисы Physiological Society<\/a><\/li>\n<li><a href=\"https://lida.sport-iat.de/ta/Record/4064150?lng=en\">Kubo и др. (2006). Effects of isometric squat training on the tendon stiffness and jump performance<\/a><\/li>\n<li><a href=\"https://doaj.org/article/45403330fb9249b3b8101b3bd753bc58\">Waugh и Scott (2021). Substantial Achilles adaptation following strength training has no impact on tendon function during walking<\/a>, PLoS ONE<\/li>\n<li><a href=\"https://openresearch.lsbu.ac.uk/item/97257\">Lambrianides и др. (2024). Evidence of different sensitivity of muscle and tendon to mechano-metabolic stimuli<\/a>, Scand J Med Sci Sports<\/li>\n<li><a href=\"https://bjsm.bmj.com/content/48/Suppl_2/A14.1.full.pdf\">Систематический обзор влияния нагрузки на жёсткость сухожилий<\/a>, BJSM<\/li>\n<\/ul>\n<p><strong>Изометрика при боли в сухожилии<\/strong><\/p>\n<ul>\n<li><a href=\"https://www.iasp-pain.org/publications/relief-news/article/isometrics-tendon-pain/\">Isometrics reduce tendon pain<\/a>, IASP<\/li>\n<li><a href=\"https://healthonline.washington.edu/sites/default/files/record_pdfs/Isometric-Exercises-Patellar-Tendinopathy.pdf\">Isometric Exercises for Patellar Tendinopathy<\/a>, UW Medicine<\/li>\n<li><a href=\"https://www.physiotutors.com/isometrics-in-tendinopathy-a-wonder-weapon-to-decrease-pain/\">Isometrics in tendinopathy — a wonder weapon to decrease pain?<\/a>, Physiotutors<\/li>\n<\/ul>\n<p><strong>Гибкость и статическая растяжка<\/strong><\/p>\n<ul>\n<li><a href=\"https://lida.sport-iat.de/ta/Record/4092909?lng=en\">Optimising the dose of static stretching to improve flexibility<\/a>, Sports Medicine, 2025<\/li>\n<li><a href=\"https://unisa.edu.au/media-centre/Releases/2024/improving-flexibility-isnt-that-much-of-a-stretch--all-it-takes-is-eight-minutes-per-week\">Improve flexibility with just eight minutes a week<\/a>, University of South Australia<\/li>\n<li><a href=\"https://www.painscience.com/biblio/hamstring-flexibility-unaffected-by-more-static-stretching.html\">Hamstring flexibility unaffected by more static stretching<\/a><\/li>\n<li><a href=\"https://train.fitness/personal-trainer-blogs/how-long-should-clients-hold-each-stretch\">How long should clients hold each stretch<\/a><\/li>\n<\/ul>\n<p><strong>Историческая справка<\/strong><\/p>\n<ul>\n<li><a href=\"https://litres.com/book/sergey-smirnov-5577977/silnee-nekuda-66611514/read/\">Сергей Смирнов. Сильнее некуда!<\/a> — о жизни и методе Александра Засса<\/li>\n<\/ul>", "short": "Источники"}];
+  var $ = function (s) { return document.querySelector(s); };
+  var store = {
+    mem: {},
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return this.mem[k] !== undefined ? this.mem[k] : d; } },
+    set: function (k, v) { this.mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+  var views = { book: $('#v-book'), chap: $('#v-chap'), timer: $('#v-timer'), diary: $('#v-diary') };
+  var topEl = $('#top');
+
+  function setTop(inChapter) {
+    topEl.innerHTML = inChapter
+      ? '<button class="back" id="bk" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Оглавление</button>'
+      : '<span class="brand">Сильные сухожилия</span>';
+    var b = $('#bk'); if (b) b.onclick = function () { location.hash = 'book'; };
+  }
+
+  function renderBook() {
+    var last = store.get('tendon-last', 0);
+    var cur = CH[last] || CH[0];
+    var h = '<div class="hero"><h1>Сильные сухожилия и гибкость тела</h1>' +
+      '<p>Как статические упражнения делают сухожилия жёстче и прочнее, а тело подвижнее: что говорят исследования, какие режимы работают и как выстроить программу на 12 недель.</p>' +
+      '<div class="meta"><span><b>' + (CH.length - 1) + '</b> глав</span><span><b>12</b> недель программы</span><span>есть офлайн</span></div>' +
+      '<div class="cta"><button class="btn primary" id="cont" type="button">' + (last ? 'Продолжить: ' : 'Начать: ') + esc(cur.short) + '</button></div></div>' +
+      '<ul class="toc">';
+    CH.forEach(function (c, i) {
+      h += '<li><button class="row" data-i="' + i + '" type="button"><span class="num">' + (c.n || '·') + '</span><span><span class="row-t">' + esc(c.title) + '</span><span class="row-l">' + esc(c.lead) + '</span></span></button></li>';
+    });
+    h += '</ul>';
+    views.book.innerHTML = h;
+    $('#cont').onclick = function () { location.hash = 'ch-' + (last + 1); };
+    views.book.querySelectorAll('.row').forEach(function (b) {
+      b.onclick = function () { location.hash = 'ch-' + (Number(b.dataset.i) + 1); };
+    });
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function renderChap(i) {
+    var c = CH[i]; if (!c) { location.hash = 'book'; return; }
+    store.set('tendon-last', i);
+    var h = '<article class="chap"><div class="num">' + (c.n ? 'Глава ' + c.n : 'Список') + '</div><h2>' + esc(c.title) + '</h2><div class="prose">' + c.html + '</div>';
+    if (c.n === 3 || c.n === 6) h += '<p><button class="btn block" id="totimer" type="button">Открыть таймер удержаний</button></p>';
+    h += '<div class="pager">';
+    if (i > 0) h += '<button class="btn" id="pv" type="button">← ' + esc(CH[i - 1].short) + '</button>';
+    if (i < CH.length - 1) h += '<button class="btn primary" id="nx" type="button">' + esc(CH[i + 1].short) + ' →</button>';
+    h += '</div></article>';
+    views.chap.innerHTML = h;
+    var pv = $('#pv'), nx = $('#nx'), tt = $('#totimer');
+    if (pv) pv.onclick = function () { location.hash = 'ch-' + i; };
+    if (nx) nx.onclick = function () { location.hash = 'ch-' + (i + 2); };
+    if (tt) tt.onclick = function () { location.hash = 'timer'; };
+    views.chap.querySelectorAll('a').forEach(function (a) { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+  }
+
+  function route() {
+    var h = (location.hash || '').slice(1) || 'book';
+    var name = h, chap = false;
+    if (h.indexOf('ch-') === 0) { name = 'chap'; chap = true; }
+    if (!views[name]) { name = 'book'; h = 'book'; }
+    Object.keys(views).forEach(function (k) { views[k].hidden = k !== name; });
+    var tab = chap ? 'book' : name;
+    document.querySelectorAll('.tab').forEach(function (t) {
+      if (t.dataset.t === tab) t.setAttribute('aria-current', 'page'); else t.removeAttribute('aria-current');
+    });
+    setTop(chap);
+    if (name === 'book') renderBook();
+    if (chap) renderChap(Number(h.slice(3)) - 1);
+    if (name === 'diary') renderLog();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.onclick = function () { var n = t.dataset.t; if (location.hash.slice(1) === n) route(); else location.hash = n; };
+  });
+  window.addEventListener('hashchange', route);
+
+  /* ---------- Таймер ---------- */
+  var T = store.get('tendon-timer-v1', { hold: 20, sets: 3, rest: 90 });
+  var phases = [], total = 0, running = false, t0 = 0, base = 0, timer = null, lastIdx = -1, lastSec = -1, wake = null, ac = null;
+  var LBL = { ramp: 'Нарастите усилие', hold: 'Держите ровно', release: 'Плавно снимите', rest: 'Отдых' };
+  var CIRC = 339.292;
+
+  function build() {
+    phases = [];
+    for (var s = 1; s <= T.sets; s++) {
+      phases.push({ k: 'ramp', d: 4, s: s }); phases.push({ k: 'hold', d: T.hold, s: s }); phases.push({ k: 'release', d: 3, s: s });
+      if (s < T.sets) phases.push({ k: 'rest', d: T.rest, s: s });
+    }
+    total = phases.reduce(function (a, p) { return a + p.d; }, 0);
+  }
+  function beep(f, d) {
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = f; g.gain.value = 0.08; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + d);
+    } catch (e) {}
+  }
+  function buzz(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+  function elapsed() { return base + (running ? (performance.now() - t0) / 1000 : 0); }
+
+  function show(el, kind, big, label, setl, frac) {
+    $('#ring').dataset.k = kind; $('#big').textContent = big; $('#phase').textContent = label; $('#setl').textContent = setl;
+    $('#bar').setAttribute('stroke-dashoffset', String(CIRC * (1 - frac)));
+  }
+  function paint() {
+    var e = elapsed();
+    if (e >= total) { finish(); return; }
+    var acc = 0, idx = 0;
+    for (; idx < phases.length; idx++) { if (e < acc + phases[idx].d) break; acc += phases[idx].d; }
+    var p = phases[idx], within = e - acc, left = Math.ceil(p.d - within);
+    show(null, p.k, left, LBL[p.k], 'Подход ' + p.s + ' из ' + T.sets, within / p.d);
+    if (idx !== lastIdx) {
+      if (lastIdx !== -1) { beep(p.k === 'hold' ? 880 : 520, 0.25); buzz(p.k === 'hold' ? 200 : 80); }
+      lastIdx = idx; lastSec = -1;
+    }
+    if ((p.k === 'rest' || p.k === 'hold') && left <= 3 && left !== lastSec && left > 0) { lastSec = left; beep(660, 0.08); }
+  }
+  function finish() {
+    stop();
+    base = 0; lastIdx = -1;
+    show(null, 'idle', '✓', 'Готово', T.sets + ' ' + (T.sets === 1 ? 'подход' : T.sets < 5 ? 'подхода' : 'подходов'), 1);
+    beep(988, 0.4); buzz([150, 80, 150]);
+    $('#go').textContent = 'Старт';
+  }
+  function stop() {
+    running = false; clearInterval(timer); timer = null;
+    try { if (wake) { wake.release(); wake = null; } } catch (e) {}
+  }
+  function idleView() {
+    build(); base = 0; lastIdx = -1;
+    show(null, 'idle', T.hold, 'Готовы начать', 'Подход 1 из ' + T.sets, 0);
+    $('#o-hold').textContent = T.hold; $('#o-sets').textContent = T.sets; $('#o-rest').textContent = T.rest;
+    $('#go').textContent = 'Старт';
+    document.querySelectorAll('#presets .chip').forEach(function (c) {
+      var p = c.dataset.p.split(',').map(Number);
+      c.setAttribute('aria-pressed', String(p[0] === T.hold && p[1] === T.sets && p[2] === T.rest));
+    });
+  }
+  $('#go').onclick = function () {
+    if (running) { base = elapsed(); stop(); $('#go').textContent = 'Продолжить'; return; }
+    if (base >= total) base = 0;
+    running = true; t0 = performance.now();
+    $('#go').textContent = 'Пауза';
+    try { if (navigator.wakeLock) navigator.wakeLock.request('screen').then(function (w) { wake = w; }, function () {}); } catch (e) {}
+    beep(440, 0.05);
+    paint(); timer = setInterval(paint, 100);
+  };
+  $('#reset').onclick = function () { stop(); idleView(); };
+  document.querySelectorAll('.stepc button').forEach(function (b) {
+    b.onclick = function () {
+      if (running) return;
+      var k = b.dataset.s, lim = { hold: [5, 120], sets: [1, 10], rest: [15, 240] }[k];
+      T[k] = Math.max(lim[0], Math.min(lim[1], T[k] + Number(b.dataset.d)));
+      store.set('tendon-timer-v1', T); idleView();
+    };
+  });
+  document.querySelectorAll('#presets .chip').forEach(function (c) {
+    c.onclick = function () {
+      if (running) return;
+      var p = c.dataset.p.split(',').map(Number); T.hold = p[0]; T.sets = p[1]; T.rest = p[2];
+      store.set('tendon-timer-v1', T); idleView();
+    };
+  });
+  document.addEventListener('visibilitychange', function () { if (running) paint(); });
+
+  /* ---------- Дневник ---------- */
+  var LOGK = 'tendon-diary-v1';
+  function today() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  $('#d-date').value = today();
+  function fmt(iso) {
+    var p = iso.split('-'); if (p.length !== 3) return iso;
+    var m = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'][Number(p[1]) - 1];
+    return Number(p[2]) + ' ' + m + ' ' + p[0];
+  }
+  function num(id, lo, hi, d) { var v = parseInt($(id).value, 10); if (isNaN(v)) v = d; return Math.max(lo, Math.min(hi, v)); }
+  $('#form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var list = store.get(LOGK, []);
+    list.push({
+      id: Date.now(), date: $('#d-date').value || today(), zone: $('#d-zone').value,
+      eff: num('#d-eff', 1, 10, 7), hold: num('#d-hold', 1, 120, 20), sets: num('#d-sets', 1, 20, 3),
+      pb: num('#d-pb', 0, 10, 0), pa: num('#d-pa', 0, 10, 0), note: $('#d-note').value.trim().slice(0, 300)
+    });
+    store.set(LOGK, list); $('#d-note').value = ''; renderLog();
+  });
+  function renderLog() {
+    var list = store.get(LOGK, []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
+    var ul = $('#log');
+    if (!list.length) {
+      ul.innerHTML = '<li class="empty" style="display:block;border:0">Записей пока нет. После занятия внесите зону, усилие и самочувствие, и здесь появится история.</li>';
+      $('#sum').textContent = ''; return;
+    }
+    var week = Date.now() - 7 * 864e5, cnt = list.filter(function (e) { return new Date(e.date).getTime() >= week; }).length;
+    $('#sum').textContent = 'Записей за 7 дней: ' + cnt + ' · всего: ' + list.length;
+    ul.innerHTML = list.map(function (e) {
+      var worse = e.pa > e.pb;
+      return '<li><div><div class="d">' + esc(fmt(e.date)) + '</div><div class="t">' + esc(e.zone) + '</div></div>' +
+        '<button class="del" data-id="' + e.id + '" type="button">Удалить</button>' +
+        '<div class="s">Усилие ' + e.eff + '/10 · ' + e.sets + ' × ' + e.hold + ' с · боль ' + e.pb + ' → <span class="' + (worse ? 'pain-up' : '') + '">' + e.pa + '</span></div>' +
+        (e.note ? '<div class="n">' + esc(e.note) + '</div>' : '') + '</li>';
+    }).join('');
+    ul.querySelectorAll('.del').forEach(function (b) {
+      b.onclick = function () {
+        if (!b.classList.contains('sure')) {
+          b.classList.add('sure'); b.textContent = 'Точно удалить?';
+          setTimeout(function () { b.classList.remove('sure'); b.textContent = 'Удалить'; }, 3000); return;
+        }
+        store.set(LOGK, store.get(LOGK, []).filter(function (x) { return String(x.id) !== b.dataset.id; })); renderLog();
+      };
+    });
+  }
+
+  idleView();
+  route();
+  
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('./sw.js').catch(function () {}); });
+  }
+})();
+</script>
+
+</body>
+</html>

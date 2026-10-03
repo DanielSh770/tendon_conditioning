@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Сильные сухожилия и гибкость",
+  "short_name": "Сухожилия",
+  "description": "Статические упражнения для сухожилий и гибкости: исследования, режимы, программа на 12 недель, таймер и дневник.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f2a33",
+  "theme_color": "#0f2a33",
+  "categories": ["health", "fitness"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
