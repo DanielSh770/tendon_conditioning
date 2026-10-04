@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Рисует картинки к упражнениям и вписывает их в index.html между метками FIG:BEGIN и FIG:END.
 
-Фигуры собираются из отрезков: позу задают углы сегментов или точки, куда тянется
-рука или нога (суставы считаются сами). Цвета берутся из CSS-переменных страницы,
-поэтому картинки сами подстраиваются под светлую и тёмную тему.
+Человек собирается как манекен с пропорциями взрослого: у каждого сегмента (бедро,
+голень, плечо, корпус...) есть профиль толщины спереди и сзади, поэтому видны икры,
+ягодицы, грудь. Позу задают углы сегментов или точки, куда тянется рука или нога,
+суставы считаются сами. Работающая или растягиваемая мышца закрашивается акцентным
+цветом. Цвета берутся из CSS-переменных страницы, так что картинки сами подстраиваются
+под светлую и тёмную тему.
 
 Запуск из корня репозитория:
   python3 tools/figures.py              # обновить index.html
@@ -16,24 +19,50 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-VIEW_W, VIEW_H, GROUND = 200, 140, 130
+GROUND = 130          # уровень пола
+MAT = 2.5             # толщина коврика
+ASPECT = 10 / 7       # обычные пропорции кадра
 
-# Длины и толщины сегментов в единицах viewBox.
-LEN = dict(torso=38, neck=15, head=7.5, upper=22, fore=19, hand=6, thigh=30, shin=29, foot=10)
-WID = dict(torso=13, upper=7.5, fore=6.5, hand=5, thigh=10, shin=8, foot=5.5)
+# Длины костей (рост около 121 единицы ≈ 175 см).
+LEN = dict(torso=36, neck=13, thigh=30, shin=29, upper=22, fore=18, hand=12)
+
+# Профили: (доля длины, толщина к передней стороне, толщина к задней).
+PROF = {
+    'thigh': [(0, 6.0, 6.6), (.25, 6.3, 6.2), (.6, 5.4, 5.0), (.85, 4.5, 4.2), (1, 4.0, 3.8)],
+    'shin': [(0, 3.7, 3.9), (.12, 3.3, 4.7), (.32, 3.0, 5.3), (.55, 2.7, 4.2), (.8, 2.2, 2.8), (1, 2.1, 2.3)],
+    'upper': [(0, 4.4, 4.6), (.18, 4.2, 4.1), (.5, 3.8, 3.4), (.8, 3.0, 2.8), (1, 2.7, 2.6)],
+    'fore': [(0, 2.7, 2.9), (.22, 3.1, 3.2), (.6, 2.4, 2.5), (1, 1.8, 1.8)],
+    'hand': [(0, 1.7, 1.7), (.3, 2.3, 1.9), (.7, 2.0, 1.5), (1, 1.1, .9)],
+    'torso': [(-.16, 2.4, 4.6), (-.06, 5.0, 7.6), (.06, 6.0, 8.0), (.2, 5.8, 6.6), (.34, 5.8, 5.1), (.5, 6.6, 5.1),
+              (.68, 7.8, 5.9), (.84, 7.4, 6.4), (.97, 5.6, 6.0), (1.07, 2.8, 3.6)],
+    'neck': [(0, 3.3, 3.5), (1, 2.9, 2.7)],
+}
+# Голова в профиль: x вперёд (к лицу), y вниз; центр примерно на уровне уха.
+HEAD = [(-1.5, -8.6), (3.0, -8.0), (6.2, -5.6), (7.3, -2.6), (7.4, -1.2), (9.0, 1.4), (7.6, 2.3), (7.7, 3.6),
+        (7.1, 4.6), (7.0, 5.6), (5.6, 7.6), (2.6, 8.2), (.6, 6.6), (-1.8, 5.6), (-6.0, 4.8), (-7.9, 1.0),
+        (-7.6, -3.6), (-5.4, -7.2)]
+HAIR = [(-1.5, -9.0), (3.2, -8.4), (6.5, -5.9), (6.7, -4.3), (3.6, -5.5), (-.4, -4.9), (-2.8, -2.2),
+        (-3.6, 1.4), (-5.6, 4.4), (-8.2, 1.0), (-8.0, -3.8), (-5.7, -7.6)]
+# Стопа: x к носку, y к подошве; начало координат в голеностопе.
+FOOT = [(-2.0, -2.4), (-3.6, .6), (-3.4, 3.0), (-1.8, 4.2), (4, 4.2), (10.5, 3.5), (14.2, 2.9), (15.3, 1.8),
+        (14.4, .5), (10.5, -.4), (5, -1.6), (2, -2.8)]
+SOLE = 4.2            # высота голеностопа над подошвой
 
 
-def at(p, deg, length):
-    a = math.radians(deg)
-    return (p[0] + length * math.cos(a), p[1] + length * math.sin(a))
-
-
-def angle(a, b):
-    return math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
-
-
-def dist(a, b):
-    return math.hypot(b[0] - a[0], b[1] - a[1])
+# ---------- геометрия ----------
+def add(a, b): return (a[0] + b[0], a[1] + b[1])
+def sub(a, b): return (a[0] - b[0], a[1] - b[1])
+def mul(a, k): return (a[0] * k, a[1] * k)
+def dot(a, b): return a[0] * b[0] + a[1] * b[1]
+def dist(a, b): return math.hypot(b[0] - a[0], b[1] - a[1])
+def unit(a):
+    d = math.hypot(*a) or 1
+    return (a[0] / d, a[1] / d)
+def cw(a): return (-a[1], a[0])          # поворот на 90° по часовой (экранные координаты)
+def ccw(a): return (a[1], -a[0])
+def vec(deg): return (math.cos(math.radians(deg)), math.sin(math.radians(deg)))
+def at(p, deg, length): return add(p, mul(vec(deg), length))
+def angle(a, b): return math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
 
 
 def ik(base, target, l1, l2, bend):
@@ -41,8 +70,7 @@ def ik(base, target, l1, l2, bend):
     d = min(max(dist(base, target), abs(l1 - l2) + 1e-6), l1 + l2 - 1e-6)
     c = (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)
     a1 = angle(base, target) + bend * math.degrees(math.acos(max(-1.0, min(1.0, c))))
-    mid = at(base, a1, l1)
-    return a1, angle(mid, target)
+    return a1, angle(at(base, a1, l1), target)
 
 
 def n(v):
@@ -50,374 +78,514 @@ def n(v):
     return '0' if s == '-0' else s
 
 
-def pts(*ps):
-    return ' '.join('%s %s' % (n(x), n(y)) for x, y in ps)
+def nums(*vs):
+    """Числа для атрибута d: без ведущих нулей, пробел только там, где нет минуса."""
+    out = ''
+    for v in vs:
+        t = n(v).replace('0.', '.', 1) if abs(v) < 1 else n(v)
+        out += (' ' if out and not t.startswith('-') else '') + t
+    return out
+
+
+def r1(p): return (round(p[0], 1), round(p[1], 1))
+
+
+def smooth(ps):
+    """Замкнутый сглаженный контур через точки (Catmull-Rom → кривые Безье).
+    Смещения считаются от уже округлённой точки, поэтому ошибка не копится."""
+    k = len(ps)
+    cur = r1(ps[0])
+    d = 'M' + nums(*cur)
+    for i in range(k):
+        p0, p1, p2, p3 = ps[i - 1], ps[i], ps[(i + 1) % k], ps[(i + 2) % k]
+        c1 = r1(add(p1, mul(sub(p2, p0), 1 / 6)))
+        c2 = r1(sub(p2, mul(sub(p3, p1), 1 / 6)))
+        end = r1(p2)
+        d += 'c' + nums(*sub(c1, cur), *sub(c2, cur), *sub(end, cur))
+        cur = end
+    return d + 'z'
+
+
+def interp(prof, t):
+    for (t0, f0, b0), (t1, f1, b1) in zip(prof, prof[1:]):
+        if t0 <= t <= t1:
+            k = (t - t0) / (t1 - t0)
+            return f0 + (f1 - f0) * k, b0 + (b1 - b0) * k
+    r = prof[0] if t < prof[0][0] else prof[-1]
+    return r[1], r[2]
+
+
+def outline(a, b, prof, nf, t_from=None):
+    """Контур сегмента от a до b; nf — нормаль к передней стороне."""
+    d, L = unit(sub(b, a)), dist(a, b)
+    rows = prof if t_from is None else [(t_from,) + interp(prof, t_from)] + [r for r in prof if r[0] > t_from]
+    bone = lambda t: add(a, mul(d, t * L))
+    front = [add(bone(t), mul(nf, wf)) for t, wf, wb in rows]
+    back = [add(bone(t), mul(nf, -wb)) for t, wf, wb in rows]
+    (t0, f0, b0), (t1, f1, b1) = rows[0], rows[-1]
+    end = add(add(bone(t1), mul(d, (f1 + b1) * .42)), mul(nf, (f1 - b1) / 2))
+    start = add(add(bone(t0), mul(d, -(f0 + b0) * .42)), mul(nf, (f0 - b0) / 2))
+    return front + [end] + back[::-1] + [start]
+
+
+def muscle(a, b, prof, nf, side, t0, t1):
+    """Мышца внутри сегмента: side +1 спереди, -1 сзади, 0 по всей толщине."""
+    d, L = unit(sub(b, a)), dist(a, b)
+    outer, inner = [], []
+    for i in range(7):
+        t = t0 + (t1 - t0) * i / 6
+        f = math.sin(math.pi * i / 6) ** .55
+        wf, wb = interp(prof, t)
+        c = add(a, mul(d, t * L))
+        if side == 0:
+            g = .2 + .8 * f
+            outer.append(add(c, mul(nf, (wf - .9) * g)))
+            inner.append(add(c, mul(nf, -(wb - .9) * g)))
+        else:
+            ws, wo = (wf, wb) if side > 0 else (wb, wf)
+            o = ws - .9
+            outer.append(add(c, mul(nf, side * o)))
+            inner.append(add(c, mul(nf, side * (o - f * (o + .3 * wo)))))
+    return outer + inner[::-1]
 
 
 class Fig:
-    def __init__(self):
-        self.back, self.body, self.front = [], [], []
+    def __init__(self, mat=None):
+        self.layers = []
+        self.box = []                   # точки, которые должны попасть в кадр
+        self.ground = GROUND - (MAT if mat else 0)
+        self.prop('<rect class="fx-fl" x="-400" y="%s" width="1000" height="80"/>' % GROUND)
+        self.prop('<path class="fx-pl" d="M-400 %sH600"/>' % n(GROUND))
+        if mat:
+            self.prop('<rect class="fx-mt" x="%s" y="%s" width="%s" height="%s" rx="1.2"/>'
+                      % (n(mat[0]), n(GROUND - MAT), n(mat[1] - mat[0]), n(MAT + .6)))
+            self.box += [(mat[0], GROUND), (mat[1], GROUND)]
 
-    # ---------- примитивы ----------
-    def line(self, layer, a, b, w, cls):
-        layer.append('<path class="%s" stroke-width="%s" d="M%sL%s"/>' % (cls, n(w), pts(a), pts(b)))
+    def prop(self, svg, *pts):
+        self.layers.append(svg)
+        self.box += list(pts)
 
-    def seg(self, a, b, w, cls, hi=None):
-        self.line(self.body, a, b, w, cls)
-        if hi is not None:
-            # Подсветка рабочей мышцы: полоса вдоль сегмента, со сдвигом к нужной стороне.
-            if hi == 0:
-                self.line(self.body, a, b, w, 'fx-hi')
-            else:
-                dx, dy = b[0] - a[0], b[1] - a[1]
-                k = hi * w / 4 / (math.hypot(dx, dy) or 1)
-                o = (dy * k, -dx * k)
-                self.line(self.body, (a[0] + o[0], a[1] + o[1]), (b[0] + o[0], b[1] + o[1]), w / 2 + .5, 'fx-hi')
+    def path(self, cls, ps):
+        self.layers.append('<path class="%s" d="%s"/>' % (cls, smooth(ps)))
+        self.box += ps
 
-    def floor(self, x1=8, x2=192, y=GROUND):
-        self.back.append('<path class="fx-pl" d="M%sL%s"/>' % (pts((x1, y + 1)), pts((x2, y + 1))))
+    def group(self, cls, shapes, outlined, muscles=()):
+        """Сначала светлая обводка всех частей (отделяет от того, что позади), потом заливка и мышцы."""
+        if outlined:
+            for ps in outlined:
+                self.layers.append('<path class="fx-o" d="%s"/>' % smooth(ps))
+        for ps in shapes:
+            self.path(cls, ps)
+        for ps in muscles:
+            self.layers.append('<path class="fx-hi" d="%s"/>' % smooth(ps))
 
-    def rect(self, x, y, w, h, layer='back', r=1.5):
-        getattr(self, layer).append('<rect class="fx-pf" x="%s" y="%s" width="%s" height="%s" rx="%s"/>' % (n(x), n(y), n(w), n(h), n(r)))
+    # ---------- предметы ----------
+    def wall(self, x, side, top=-300):
+        """Стена: лицевая грань по x, толща уходит в сторону side (+1 вправо, -1 влево)."""
+        x0 = x if side > 0 else x - 10
+        self.prop('<rect class="fx-pf" x="%s" y="%s" width="10" height="%s"/>' % (n(x0), top, n(GROUND - top)), (x, GROUND - 60))
+        self.prop('<rect class="fx-pe" x="%s" y="%s" width="10" height="5"/>' % (n(x0), n(GROUND - 5)))
+        self.prop('<path class="fx-pl" d="M%s %sV%s"/>' % (n(x), top, n(GROUND)))
 
-    def wall(self, x, side, y1=6, y2=GROUND):
-        """Стена: линия по x, заливка уходит в сторону side (+1 вправо, -1 влево)."""
-        self.rect(x if side > 0 else x - 7, y1, 7, y2 - y1 + 2, r=0)
-        self.back.append('<path class="fx-pl" d="M%sL%s"/>' % (pts((x, y1)), pts((x, y2 + 2))))
+    def block(self, x, y, w, h, cls='fx-pf', fit=True):
+        self.prop('<rect class="%s" x="%s" y="%s" width="%s" height="%s" rx="1"/>' % (cls, n(x), n(y), n(w), n(h)),
+                  *([(x, y), (x + w, y + h)] if fit else []))
+
+    def stool(self, x, w, top):
+        self.block(x, top, w, 5, 'fx-pe')
+        self.block(x + 3, top + 5, 3.5, GROUND - top - 5)
+        self.block(x + w - 6.5, top + 5, 3.5, GROUND - top - 5)
 
     def ball(self, c, r):
-        self.front.append('<circle class="fx-pf fx-ps" cx="%s" cy="%s" r="%s"/>' % (n(c[0]), n(c[1]), n(r)))
+        self.layers.append('<circle class="fx-o" cx="%s" cy="%s" r="%s"/><circle class="fx-bl" cx="%s" cy="%s" r="%s"/>'
+                           '<path class="fx-bs" d="M%s %sQ%s %s %s %s"/>' % (
+                               n(c[0]), n(c[1]), n(r), n(c[0]), n(c[1]), n(r),
+                               n(c[0] - r * .7), n(c[1] - r * .7), n(c[0] + r * .1), n(c[1]), n(c[0] - r * .2), n(c[1] + r * .97)))
+        self.box += [(c[0] - r, c[1] - r), (c[0] + r, c[1] + r)]
 
     def strap(self, *ps):
-        self.front.append('<path class="fx-st" d="M%s"/>' % ' L'.join(pts(p) for p in ps))
+        self.layers.append('<path class="fx-st" d="M%s"/>' % 'L'.join('%s %s' % (n(x), n(y)) for x, y in ps))
 
     def arrow(self, a, b):
         """Направление усилия: стрелка из a в b."""
-        ang = math.atan2(b[1] - a[1], b[0] - a[0])
-        h, s = 6.5, 4.2
-        base = (b[0] - h * math.cos(ang), b[1] - h * math.sin(ang))
-        l = (base[0] + s * math.sin(ang), base[1] - s * math.cos(ang))
-        r = (base[0] - s * math.sin(ang), base[1] + s * math.cos(ang))
-        self.front.append('<path class="fx-ar" d="M%sL%s"/><path class="fx-ah" d="M%sL%sL%sZ"/>' % (pts(a), pts(base), pts(b), pts(l), pts(r)))
+        d = unit(sub(b, a))
+        base = sub(b, mul(d, 6.5))
+        l, r = add(base, mul(ccw(d), 4.2)), add(base, mul(cw(d), 4.2))
+        self.layers.append('<path class="fx-ar" d="M%s %sL%s %s"/><path class="fx-ah" d="M%s %sL%s %sL%s %sZ"/>' % (
+            n(a[0]), n(a[1]), n(base[0]), n(base[1]), n(b[0]), n(b[1]), n(l[0]), n(l[1]), n(r[0]), n(r[1])))
+        self.box += [a, b]
 
-    def measure(self, a, b, label_at, anchor='middle', label='см', tick=5):
+    def measure(self, a, b, label_at, anchor='middle', label='см', tick=4):
         """Размерная линия для тестов: отрезок с засечками и подписью в точке label_at."""
-        ang = math.atan2(b[1] - a[1], b[0] - a[0])
-        t = (tick * math.sin(ang), -tick * math.cos(ang))
-        out = '<path class="fx-ms" d="M%sL%sM%sL%sM%sL%s"/>' % (
-            pts(a), pts(b), pts((a[0] - t[0], a[1] - t[1])), pts((a[0] + t[0], a[1] + t[1])),
-            pts((b[0] - t[0], b[1] - t[1])), pts((b[0] + t[0], b[1] + t[1])))
-        out += '<text class="fx-tx" x="%s" y="%s" text-anchor="%s">%s</text>' % (n(label_at[0]), n(label_at[1]), anchor, label)
-        self.front.append(out)
+        t = mul(cw(unit(sub(b, a))), tick)
+        self.layers.append('<path class="fx-ms" d="M%s %sL%s %sM%s %sL%s %sM%s %sL%s %s"/>' % tuple(n(v) for v in (
+            *a, *b, *sub(a, t), *add(a, t), *sub(b, t), *add(b, t))) +
+            '<text class="fx-tx" x="%s" y="%s" text-anchor="%s">%s</text>' % (n(label_at[0]), n(label_at[1]), anchor, label))
+        self.box += [a, b, label_at]
 
-    # ---------- человек сбоку ----------
-    def side(self, hip, torso, head=None, armN=None, armF=None, legN=None, legF=None, hi=None):
-        """Фигура в профиль. N — ближние к зрителю конечности, F — дальние (светлее).
+    # ---------- человек в профиль ----------
+    def person(self, hip, torso, head=None, legN=None, legF=None, armN=None, armF=None, hi=()):
+        """Человек в профиль, лицом в сторону по часовой стрелке от направления корпуса
+        (стоя — вправо, лёжа на спине головой влево — вверх).
 
-        Конечность задаётся кортежем:
-          ('to', (x, y), bend[, end_angle]) — тянется к точке, сустав считается сам;
-          ('ang', a1, a2[, end_angle])      — абсолютные углы сегментов (0 вправо, 90 вниз).
-        end_angle — угол стопы или кисти. hi = {'torso': 1, 'thighN': -1, ...} подсвечивает сегменты:
-        для рук и ног +1 — передняя сторона, -1 — задняя; для корпуса +1 — спина, -1 — грудь и живот; 0 — целиком.
+        Конечность: ('to', (x, y), bend, end) — тянется к точке, сустав считается сам;
+        ('ang', a1, a2, end) — углы сегментов (0 вправо, 90 вниз). end — угол стопы или кисти.
+        Для ног пятым элементом можно задать подошву: 'up' или 'down', если она не очевидна.
+        N — ближние к зрителю конечности, F — дальние (светлее).
+        hi — мышцы: (сегмент, сторона, t0, t1), сегменты torso, thighN, shinN, upperN, foreN;
+        сторона +1 спереди, -1 сзади, 0 целиком.
         """
-        hi = hi or {}
         sh = at(hip, torso, LEN['torso'])
-        hd = at(sh, torso if head is None else head, LEN['neck'])
-        j = dict(hip=hip, sh=sh, head=hd)
+        hdir = vec(torso if head is None else head)
+        hc = add(add(sh, mul(hdir, LEN['neck'])), mul(cw(hdir), 1.5))
+        j = dict(hip=hip, sh=sh, head=hc)
+        segs = {}
 
         def limb(spec, base, l1, l2):
             a1, a2 = ik(base, spec[1], l1, l2, spec[2]) if spec[0] == 'to' else spec[1:3]
             m = at(base, a1, l1)
-            return m, at(m, a2, l2), (spec[3] if len(spec) > 3 else a2)
+            return m, at(m, a2, l2), (spec[3] if len(spec) > 3 else a2), (spec[4] if len(spec) > 4 else None)
 
-        def leg(spec, tag, cls):
-            if not spec:
-                return
-            k, a, fa = limb(spec, hip, LEN['thigh'], LEN['shin'])
-            t = at(a, fa, LEN['foot'])
-            j.update({'k' + tag: k, 'a' + tag: a, 't' + tag: t})
-            self.seg(hip, k, WID['thigh'], cls, hi.get('thigh' + tag))
-            self.seg(k, a, WID['shin'], cls, hi.get('shin' + tag))
-            self.seg(a, t, WID['foot'], cls)
+        def foot(ank, knee, fa, sole):
+            f = vec(fa)
+            s = cw(f)
+            if sole == 'up':
+                s = s if s[1] < 0 else mul(s, -1)
+            elif sole == 'down':
+                s = s if s[1] > 0 else mul(s, -1)
+            elif dot(s, sub(knee, ank)) > 0:
+                s = mul(s, -1)
+            return [add(add(ank, mul(f, x)), mul(s, y)) for x, y in FOOT]
 
-        def arm(spec, tag, cls):
-            if not spec:
-                return
-            e, w, ha = limb(spec, sh, LEN['upper'], LEN['fore'])
+        def leg(spec, tag):
+            k, a, fa, sole = limb(spec, hip, LEN['thigh'], LEN['shin'])
+            ft = foot(a, k, fa, sole)
+            j.update({'k' + tag: k, 'a' + tag: a, 'toe' + tag: ft[7], 'heel' + tag: ft[2], 'ball' + tag: ft[5]})
+            nt, ns = ccw(unit(sub(k, hip))), ccw(unit(sub(a, k)))
+            segs['thigh' + tag] = (hip, k, PROF['thigh'], nt)
+            segs['shin' + tag] = (k, a, PROF['shin'], ns)
+            shapes = [outline(hip, k, PROF['thigh'], nt), outline(k, a, PROF['shin'], ns), ft]
+            # Обводка бедра начинается ниже тазобедренного сустава, чтобы нога не отрезалась от таза.
+            outl = [outline(hip, k, PROF['thigh'], nt, .3), shapes[1], ft]
+            return shapes, outl
+
+        def arm(spec, tag):
+            e, w, ha, _ = limb(spec, sh, LEN['upper'], LEN['fore'])
             h = at(w, ha, LEN['hand'])
             j.update({'e' + tag: e, 'w' + tag: w, 'h' + tag: h})
-            self.seg(sh, e, WID['upper'], cls, hi.get('upper' + tag))
-            self.seg(e, w, WID['fore'], cls, hi.get('fore' + tag))
-            self.seg(w, h, WID['hand'], cls)
+            nu, nf = ccw(unit(sub(e, sh))), ccw(unit(sub(w, e)))
+            nh = ccw(unit(sub(h, w)))
+            segs['upper' + tag] = (sh, e, PROF['upper'], nu)
+            segs['fore' + tag] = (e, w, PROF['fore'], nf)
+            shapes = [outline(sh, e, PROF['upper'], nu), outline(e, w, PROF['fore'], nf), outline(w, h, PROF['hand'], nh)]
+            return shapes, shapes
 
-        leg(legF, 'F', 'fx-f')
-        arm(armF, 'F', 'fx-f')
-        self.seg(hip, sh, WID['torso'], 'fx-n', hi.get('torso'))
-        self.body.append('<circle class="fx-hd" cx="%s" cy="%s" r="%s"/>' % (n(hd[0]), n(hd[1]), n(LEN['head'])))
-        leg(legN, 'N', 'fx-n')
-        arm(armN, 'N', 'fx-n')
+        def muscles(names):
+            return [muscle(*segs[s][:4], side, t0, t1) for s, side, t0, t1 in hi if s in names]
+
+        for spec, fn in ((legF, leg), (armF, arm)):
+            if spec:
+                shapes, _ = fn(spec, 'F')
+                self.group('fx-f', shapes, None)
+
+        nt = cw(unit(sub(sh, hip)))
+        segs['torso'] = (hip, sh, PROF['torso'], nt)
+        neck = outline(add(sh, mul(hdir, 1)), sub(hc, mul(hdir, 1)), PROF['neck'], cw(hdir))
+        body = [outline(hip, sh, PROF['torso'], nt), neck]
+        headp = [add(add(hc, mul(cw(hdir), x)), mul(hdir, -y)) for x, y in HEAD]
+        hair = [add(add(hc, mul(cw(hdir), x)), mul(hdir, -y)) for x, y in HAIR]
+        self.group('fx-b', body + [headp], body + [headp], muscles({'torso'}))
+        self.path('fx-hr', hair)
+
+        if legN:
+            shapes, outl = leg(legN, 'N')
+            self.group('fx-b', shapes, outl, muscles({'thighN', 'shinN'}))
+        if armN:
+            shapes, outl = arm(armN, 'N')
+            self.group('fx-b', shapes, outl, muscles({'upperN', 'foreN'}))
         return j
 
     # ---------- человек анфас ----------
-    def front_view(self, cx, hip_y, arms, hi_arms=None, legs=True):
-        """Фигура анфас: arms = (левая, правая), каждая ('to', (x, y), bend[, угол кисти])
-        или ('pts', локоть, запястье[, угол кисти]), когда рука идёт к зрителю и в проекции короче."""
+    def front(self, cx, hip_y, arms, hi=(), legs=True):
+        """Человек анфас. arms = (левая, правая): ('to', (x, y), bend, угол кисти)
+        или ('pts', локоть, запястье, угол кисти), когда рука идёт к зрителю и в проекции короче.
+        hi — мышцы рук: ('upper' | 'fore', t0, t1)."""
         sh_y = hip_y - LEN['torso']
-        self.body.append('<path class="fx-tf" d="M%sL%sL%sL%sZ"/>' % (
-            pts((cx - 11, sh_y)), pts((cx + 11, sh_y)), pts((cx + 7.5, hip_y)), pts((cx - 7.5, hip_y))))
-        self.body.append('<circle class="fx-hd" cx="%s" cy="%s" r="%s"/>' % (n(cx), n(sh_y - LEN['neck'] + 1), n(LEN['head'])))
-        j = {}
         if legs:
-            for side in (-1, 1):
-                hip = (cx + side * 5.5, hip_y + 2)
-                ank = (cx + side * 9, GROUND - 2.5)
-                self.seg(hip, ank, WID['thigh'] - 1, 'fx-n')
-                self.seg(ank, (ank[0] + side * 4, GROUND - 2.5), WID['foot'], 'fx-n')
-        for side, spec in zip((-1, 1), arms):
-            sh = (cx + side * 12, sh_y + 3)
+            for s in (-1, 1):
+                hp, k, a = (cx + s * 6.2, hip_y + 2), (cx + s * 7, hip_y + 32), (cx + s * 7.6, GROUND - SOLE)
+                th = outline(hp, k, [(0, 6.4, 5.6), (.5, 5.2, 4.6), (1, 4.0, 3.6)], mul(ccw(unit(sub(k, hp))), -s))
+                sn = outline(k, a, [(0, 3.9, 3.7), (.3, 4.6, 4.0), (.7, 3.2, 2.9), (1, 2.4, 2.3)], mul(ccw(unit(sub(a, k))), -s))
+                ft = [add(a, p) for p in [(-2.6 * s, -1.5), (3.2 * s, -1), (5.2 * s, 3.1), (3.6 * s, 4.2), (-2.8 * s, 4.2), (-3.4 * s, 2.0)]]
+                self.group('fx-b', [th, sn, ft], None)
+        torso = [(-3, -6), (-9, -3.2), (-13.6, 1.5), (-12.6, 10), (-10, 22), (-11.6, 32), (-10.8, 40), (-2, 43),
+                 (2, 43), (10.8, 40), (11.6, 32), (10, 22), (12.6, 10), (13.6, 1.5), (9, -3.2), (3, -6)]
+        torso = [(cx + x, sh_y + y) for x, y in torso]
+        hc = (cx, sh_y - 13)
+        neck = [(cx - 3, sh_y - 2), (cx - 3, hc[1] + 4), (cx + 3, hc[1] + 4), (cx + 3, sh_y - 2)]
+        headp = [(hc[0] + 6.6 * math.cos(t * math.pi / 8), hc[1] + 8.3 * math.sin(t * math.pi / 8)) for t in range(16)]
+        hair = [(hc[0] + 7 * math.cos(t * math.pi / 10), hc[1] - 1 + 8.6 * math.sin(t * math.pi / 10)) for t in range(10, 21)]
+        hair += [(cx + 5.2, hc[1] - 3.5), (cx + 1, hc[1] - 5.2), (cx - 3.5, hc[1] - 4.8), (cx - 5.4, hc[1] - 2.5)]
+        self.group('fx-b', [torso, neck, headp], [torso])
+        self.path('fx-hr', hair)
+        j = {}
+        for s, spec in zip((-1, 1), arms):
+            sh = (cx + s * 12, sh_y + 3)
             if spec[0] == 'pts':
                 e, w = spec[1], spec[2]
-                a2 = angle(e, w)
             else:
                 a1, a2 = ik(sh, spec[1], LEN['upper'], LEN['fore'], spec[2])
                 e = at(sh, a1, LEN['upper'])
                 w = at(e, a2, LEN['fore'])
-            h = at(w, spec[3] if len(spec) > 3 else a2, LEN['hand'])
-            hs = (hi_arms or {})
-            self.seg(sh, e, WID['upper'], 'fx-n', hs.get('upper'))
-            self.seg(e, w, WID['fore'], 'fx-n', hs.get('fore'))
-            self.seg(w, h, WID['hand'], 'fx-n')
-            j['w' + ('L' if side < 0 else 'R')] = w
-            j['h' + ('L' if side < 0 else 'R')] = h
-            j['e' + ('L' if side < 0 else 'R')] = e
+            h = at(w, spec[3], LEN['hand'])
+            nu, nf, nh = (mul(ccw(unit(sub(q, p))), -s) for p, q in ((sh, e), (e, w), (w, h)))
+            up = [(0, 4.6, 4.4), (.25, 4.3, 3.9), (.6, 3.6, 3.3), (1, 2.8, 2.6)]
+            fo = [(0, 2.8, 2.8), (.25, 3.3, 3.1), (1, 2.0, 2.0)]
+            hd = [(0, 2.0, 2.0), (.35, 3.1, 2.7), (.75, 2.8, 2.3), (1, 1.4, 1.2)]
+            shapes = [outline(sh, e, up, nu), outline(e, w, fo, nf), outline(w, h, hd, nh)]
+            ms = [muscle(*({'upper': (sh, e, up, nu), 'fore': (e, w, fo, nf)}[seg]), 0, t0, t1) for seg, t0, t1 in hi]
+            self.group('fx-b', shapes, shapes, ms)
+            j.update({('w', s): w, ('h', s): h, ('e', s): e})
         j['sh_y'] = sh_y
         return j
 
-    def svg(self, zoom=None):
-        vb = '0 0 %d %d' % (VIEW_W, VIEW_H) if zoom is None else ' '.join(n(v) for v in zoom)
-        return '<svg viewBox="%s" aria-hidden="true">%s</svg>' % (vb, ''.join(self.back + self.body + self.front))
+    def svg(self, view=None, min_w=150):
+        if view is None:
+            xs, ys = [p[0] for p in self.box], [p[1] for p in self.box]
+            x0, x1, y0 = min(xs) - 8, max(xs) + 8, min(ys) - 8
+            y1 = max(GROUND + 7, max(ys) + 4)
+            w, h = x1 - x0, y1 - y0
+            # Лёжа фигура длинная и низкая: кадр шире, чтобы над ней не оставалось пустоты.
+            aspect = min(max(w / h, ASPECT), 2.1)
+            if w < h * aspect:
+                w = h * aspect
+            w = max(w, min_w)
+            h = w / aspect
+            cx = (min(xs) + max(xs)) / 2
+            view = (cx - w / 2, y1 - h, w, h)
+        return '<svg viewBox="%s" aria-hidden="true">%s</svg>' % (' '.join(n(v) for v in view), ''.join(self.layers))
 
 
-ON_FLOOR = GROUND - 2.75      # высота голеностопа, когда стопа стоит на полу
-LYING = GROUND - WID['torso'] / 2
+ON_FLOOR = GROUND - SOLE              # голеностоп стоящего человека
+ON_MAT = GROUND - MAT - SOLE
+MAT_TOP = GROUND - MAT
+STAND = ON_FLOOR - LEN['shin'] - LEN['thigh']   # таз стоящего человека
 
 
+# ---------- упражнения ----------
 def calf_iso():
-    f = Fig(); f.floor(); f.wall(150, 1)
-    j = f.side(hip=(98, 64), torso=-86,
-               legN=('ang', 90, 90, 52), legF=('ang', 91, 91, 52),
-               armN=('to', (146, 46), 1), armF=('to', (146, 49), 1),
-               hi={'shinN': -1})
-    heel = j['aN']
-    f.arrow((heel[0] - 9, heel[1] + 7), (heel[0] - 9, heel[1] - 11))
+    f = Fig(); f.wall(150, 1)
+    ank = 117.6                       # на носках: голеностоп приподнят
+    hip = (102, ank - 59)
+    j = f.person(hip, -86, legN=('ang', 89, 91, 52), legF=('ang', 90, 92, 52),
+                 armN=('to', (147.5, hip[1] - 39), 1, -76), armF=('to', (147.5, hip[1] - 36), 1, -74),
+                 hi=[('shinN', -1, .04, .66)])
+    h = j['heelN']
+    f.arrow((h[0] - 7, h[1] + 9), (h[0] - 7, h[1] - 9))
     return f
 
 
 def calf_str():
-    f = Fig(); f.floor(); f.wall(162, 1)
-    f.side(hip=(104, 70), torso=-62,
-           legN=('to', (62, ON_FLOOR), -1, 0), legF=('to', (128, ON_FLOOR), -1, 0),
-           armN=('to', (158, 40), 1), armF=('to', (158, 44), 1),
-           hi={'shinN': -1})
+    f = Fig(); f.wall(166, 1)
+    back = (62, ON_FLOOR)
+    hip = at(back, -55, 58.6)
+    j = f.person(hip, -60, legN=('to', back, -1, 0), legF=('to', (128, ON_FLOOR), -1, 0),
+                 armN=('to', (163.5, hip[1] - 36), 1, -70), armF=('to', (163.5, hip[1] - 33), 1, -70),
+                 hi=[('shinN', -1, .04, .66)])
     return f
 
 
 def knee_iso():
-    f = Fig(); f.floor(); f.wall(58, -1)
-    hip = (65 + WID['torso'] / 2 - 6, ON_FLOOR - LEN['shin'] - 2)
-    f.side(hip=hip, torso=-90,
-           legN=('ang', 0, 90, 0), legF=('ang', 0, 90, 0),
-           armN=('ang', 2, 0), armF=('ang', 4, 2),
-           hi={'thighN': 1})
+    f = Fig(); f.wall(60, -1)
+    hip = (68.5, ON_FLOOR - LEN['shin'])
+    f.person(hip, -90, legN=('ang', 0, 90, 0), legF=('ang', -1, 91, 0),
+             armN=('ang', 4, 0, 0), armF=('ang', 6, 2, 2),
+             hi=[('thighN', 1, .05, .92)])
     return f
 
 
 def knee_str():
-    f = Fig(); f.floor()
-    hip = (100, ON_FLOOR - LEN['thigh'] - LEN['shin'] + 1)
-    f.side(hip=hip, torso=-84, legF=('ang', 90, 90, 0),
-           legN=('ang', 97, -122, -165),
-           armF=('ang', -14, -8),
-           armN=('to', (hip[0] - 17, hip[1] + 1), 1, 120),
-           hi={'thighN': 1})
+    f = Fig(); f.wall(150, 1)
+    hip = (98, STAND)
+    j = f.person(hip, -86, legF=('ang', 90, 90, 0),
+                 legN=('ang', 94, -112, -150, 'up'),
+                 armF=('to', (147.5, hip[1] - 32), 1, -76),
+                 armN=('to', (84, hip[1] - 3), 1, 160),
+                 hi=[('thighN', 1, .05, .92)])
     return f
 
 
 def ham_iso():
-    f = Fig(); f.floor()
-    hip = (82, LYING)
-    j = f.side(hip=hip, torso=180, head=180,
-               legF=('ang', 0, 0, -80),
-               legN=('to', (hip[0] + 54, GROUND - 3.5), -1, -70),
-               armF=('ang', 3, 0), armN=('ang', 3, 0),
-               hi={'thighN': -1})
-    a = j['aN']
-    f.arrow((a[0] - 4, a[1] - 25), (a[0] - 4, a[1] - 8))
+    f = Fig(mat=(30, 170))
+    hip = (84, MAT_TOP - 7.6)
+    j = f.person(hip, 180.5, legF=('ang', .5, 1, -82),
+                 legN=('to', (hip[0] + 56, MAT_TOP - 3.6), -1, -66),
+                 armF=('ang', 4, 0, 0), armN=('ang', 3, 0, 0),
+                 hi=[('thighN', -1, .08, .92)])
+    a = j['heelN']
+    f.arrow((a[0], a[1] - 26), (a[0], a[1] - 9))
     return f
 
 
 def ham_str():
-    f = Fig(); f.floor(); f.rect(124, 92, 36, 6); f.rect(128, 98, 4, 32, r=0); f.rect(152, 98, 4, 32, r=0)
-    hip = (82, ON_FLOOR - LEN['thigh'] - LEN['shin'] + 1)
-    f.side(hip=hip, torso=-38,
-           legF=('ang', 90, 90, 0),
-           legN=('to', (140, 89), -1, -70),
-           armN=('to', (112, 80), 1), armF=('to', (108, 78), 1),
-           hi={'thighN': -1})
+    f = Fig(); f.stool(124, 36, 92)
+    hip = (78, STAND)
+    f.person(hip, -38, legF=('ang', 90, 90, 0),
+             legN=('to', (139, 88), -1, -72),
+             armN=('to', (115, 77), 1, 20), armF=('to', (111, 75), 1, 20),
+             hi=[('thighN', -1, .08, .92)])
     return f
 
 
 def hipflex_iso():
-    f = Fig(); f.floor()
-    hip = (92, LYING)
-    feet = (hip[0] + 44, ON_FLOOR)
-    j = f.side(hip=hip, torso=180, head=180,
-               legF=('to', (feet[0] + 2, feet[1]), -1, 0), legN=('to', feet, -1, 0),
-               armF=('ang', 3, 0), armN=('ang', 3, 0), hi={'thighN': 1})
+    f = Fig(mat=(26, 160))
+    hip = (84, MAT_TOP - 7.6)
+    feet = (hip[0] + 42, ON_MAT)
+    j = f.person(hip, 180.5, legF=('to', (feet[0] + 1.5, feet[1]), -1, 0), legN=('to', feet, -1, 0),
+                 armF=('ang', 4, 0, 0), armN=('ang', 3, 0, 0),
+                 hi=[('thighN', 0, .02, .6)])
     k = j['kN']
-    f.ball((k[0] - 1, k[1] + 2), 7.5)
-    f.arrow((k[0] - 21, k[1] - 13), (k[0] - 10, k[1] - 5))
-    f.arrow((k[0] + 19, k[1] - 13), (k[0] + 8, k[1] - 5))
+    f.ball((k[0] - 2, k[1] + 3), 7)
+    f.arrow((k[0] - 22, k[1] - 12), (k[0] - 10, k[1] - 4))
+    f.arrow((k[0] + 18, k[1] - 12), (k[0] + 7, k[1] - 4))
     return f
 
 
 def hipflex_str():
-    f = Fig(); f.floor()
-    knee = (82, GROUND - WID['shin'] / 2)
-    hip = at(knee, -72, LEN['thigh'])
-    f.side(hip=hip, torso=-92,
-           legN=('ang', 108, 180, 180),
-           legF=('to', (hip[0] + 32, ON_FLOOR), -1, 0),
-           armN=('to', (hip[0] + 6, hip[1] - 2), 1), armF=('to', (hip[0] + 8, hip[1] - 3), 1),
-           hi={'thighN': 1})
+    f = Fig(mat=(30, 170))
+    knee = (80, MAT_TOP - 3.7)
+    hip = at(knee, -70, LEN['thigh'])
+    f.person(hip, -93, legN=('ang', 110, 180, 180, 'up'),
+             legF=('to', (hip[0] + 33, ON_MAT), -1, 0),
+             armN=('to', (hip[0] + 24, hip[1] - 4), 1, 10), armF=('to', (hip[0] + 26, hip[1] - 6), 1, 10),
+             hi=[('thighN', 1, 0, .55), ('torso', -1, -.1, .3)])
     return f
 
 
 def core_iso():
-    f = Fig(); f.floor()
-    sh = (130, GROUND - WID['fore'] / 2 - LEN['upper'])
-    tilt = -7.5
+    f = Fig(mat=(30, 175))
+    sh = (138, MAT_TOP - 2.7 - LEN['upper'])
+    tilt = -8.2
     hip = at(sh, tilt + 180, LEN['torso'])
-    f.side(hip=hip, torso=tilt,
-           legN=('ang', tilt + 180, tilt + 180, 98), legF=('ang', tilt + 180, tilt + 180, 98),
-           armN=('ang', 90, 0), armF=('ang', 90, 0),
-           hi={'torso': -1})
+    f.person(hip, tilt, head=tilt - 4,
+             legN=('ang', tilt + 180, tilt + 180, 100), legF=('ang', tilt + 180, tilt + 180, 100),
+             armN=('ang', 90, -1, 0), armF=('ang', 90, -1, 0),
+             hi=[('torso', -1, .1, .8)])
     return f
 
 
 def core_str():
-    f = Fig(); f.floor()
-    knee = (84, GROUND - WID['shin'] / 2)
-    hip = at(knee, 214, LEN['thigh'])
-    f.side(hip=hip, torso=12, head=20,
-           legN=('ang', 34, 180, 180), legF=('ang', 34, 180, 180),
-           armN=('to', (150, GROUND - 3.5), 1, 0), armF=('to', (148, GROUND - 3.5), 1, 0),
-           hi={'torso': 1})
+    f = Fig(mat=(30, 180))
+    knee = (90, MAT_TOP - 3.7)
+    hip = at(knee, 207, LEN['thigh'])
+    f.person(hip, 8, head=12,
+             legN=('ang', 27, 180, 180, 'up'), legF=('ang', 27, 181, 180, 'up'),
+             armN=('to', (139, MAT_TOP - 2), 1, 2), armF=('to', (137, MAT_TOP - 2), 1, 2),
+             hi=[('torso', 1, .05, 1)])
     return f
 
 
 def shoulder_iso():
-    f = Fig(); f.floor()
-    for x in (33, 159):
-        f.rect(x, 14, 8, GROUND - 14 + 2, r=0)
-    f.rect(33, 8, 134, 8, r=0)
-    cx, hip_y = 100, ON_FLOOR - 56
-    y = hip_y - 35
-    f.front_view(cx, hip_y, arms=(('to', (20, y), 1, 180), ('to', (180, y), -1, 0)),
-                 hi_arms={'upper': 0})
-    f.arrow((62, y - 13), (44, y - 13))
-    f.arrow((138, y - 13), (156, y - 13))
+    f = Fig()
+    cx, hip_y = 100, STAND
+    y = hip_y - LEN['torso'] + 3
+    for x in (37, 155):
+        f.block(x, -300, 8, GROUND + 300, 'fx-pf', fit=False)
+        f.block(x + (6 if x < 100 else 0), -300, 2, GROUND + 300, 'fx-pe', fit=False)
+    f.block(37, hip_y - 74, 126, 9, 'fx-pf')
+    f.front(cx, hip_y, arms=(('to', (40, y), 1, -90), ('to', (160, y), -1, -90)), hi=[('upper', 0, .32)])
+    f.arrow((60, y - 20), (44, y - 20))
+    f.arrow((140, y - 20), (156, y - 20))
     return f
 
 
 def shoulder_str():
-    f = Fig(); f.floor(); f.rect(52, 8, 8, GROUND - 8 + 2, r=0)
-    hip = (90, ON_FLOOR - 57)
-    f.side(hip=hip, torso=-84,
-           legN=('to', (70, ON_FLOOR), -1, 0), legF=('to', (114, ON_FLOOR), -1, 0),
-           armN=('to', (62, hip[1] - 52), -1, -90),
-           armF=('ang', 100, 70),
-           hi={'torso': -1})
+    f = Fig()
+    hip = (98, ON_FLOOR - 57.5)
+    sh = at(hip, -82, LEN['torso'])
+    jamb = sh[0] - LEN['upper'] - 2.8       # предплечье прижато к косяку
+    f.block(jamb - 12, -300, 12, GROUND + 300, 'fx-pf', fit=False)
+    f.block(jamb - 2, -300, 2, GROUND + 300, 'fx-pe', fit=False)
+    f.box.append((jamb - 12, GROUND))
+    f.person(hip, -82, legN=('to', (80, ON_FLOOR), -1, 0), legF=('to', (122, ON_FLOOR), -1, 0),
+             armN=('ang', 181, -90, -90), armF=('ang', 96, 64, 64),
+             hi=[('torso', -1, .55, .96), ('upperN', 1, 0, .5)])
     return f
 
 
 def back_iso():
-    f = Fig(); f.floor()
-    hip = (66, LYING)
-    j = f.side(hip=hip, torso=-96,
-               legN=('ang', 0, 0, -90), legF=('ang', 0, 0, -90),
-               armN=('to', (hip[0] + 16, hip[1] - 16), 1, 0), armF=('to', (hip[0] + 18, hip[1] - 17), 1, 0),
-               hi={'torso': 1, 'upperN': 1})
-    sole = (j['tN'][0] + 4, j['tN'][1] + 3)
-    f.strap(j['hN'], sole, (j['aN'][0] + 4, j['aN'][1] + 3), j['hN'])
+    f = Fig(mat=(40, 175))
+    hip = (70, MAT_TOP - 7.4)
+    j = f.person(hip, -97, legN=('to', (hip[0] + 62, ON_MAT + .4), 1, -80), legF=('to', (hip[0] + 62, ON_MAT), 1, -80),
+                 armN=('to', (hip[0] + 21, hip[1] - 14), 1, 0), armF=('to', (hip[0] + 23, hip[1] - 15), 1, 0),
+                 hi=[('torso', 1, .3, .95), ('upperN', 1, .12, .9)])
+    ball, top = j['ballN'], j['toeN']
+    f.strap(j['hN'], (ball[0] + 2, ball[1] + 1.5), (top[0] - 2, top[1] - 4), j['hN'])
     w = j['wN']
-    f.arrow((w[0] + 2, w[1] - 12), (w[0] - 16, w[1] - 12))
+    f.arrow((w[0] + 4, w[1] - 13), (w[0] - 16, w[1] - 13))
     return f
 
 
 def back_str():
-    f = Fig(); f.floor(); f.rect(150, 62, 34, 6); f.rect(176, 68, 5, 62, r=0)
-    hip = (82, ON_FLOOR - LEN['thigh'] - LEN['shin'] + 1)
-    f.side(hip=hip, torso=-4, head=12,
-           legN=('ang', 92, 90, 0), legF=('ang', 92, 90, 0),
-           armN=('to', (164, 58), 1, 0), armF=('to', (160, 59), 1, 0),
-           hi={'torso': 1, 'upperN': -1})
+    f = Fig(); f.block(150, 63, 36, 5, 'fx-pe'); f.block(178, 68, 5, GROUND - 68)
+    hip = (84, STAND + 1)
+    f.person(hip, -2, head=14,
+             legN=('ang', 93, 88, 0), legF=('ang', 93, 88, 0),
+             armN=('to', (160, 60), 1, 0), armF=('to', (157, 61), 1, 0),
+             hi=[('torso', 1, .35, 1.02), ('upperN', -1, .05, .8)])
     return f
 
 
 def wrist_iso():
     f = Fig()
-    cx, hip_y = 100, 112
+    cx, hip_y = 100, STAND
     sh_y = hip_y - LEN['torso']
-    f.front_view(cx, hip_y, legs=False,
-                 arms=(('pts', (cx - 31, sh_y + 21), (cx - 3, sh_y + 13), -90),
-                       ('pts', (cx + 31, sh_y + 21), (cx + 3, sh_y + 13), -90)),
-                 hi_arms={'fore': 0})
-    y = sh_y + 3
-    f.arrow((cx - 30, y), (cx - 10, y))
-    f.arrow((cx + 30, y), (cx + 10, y))
-    return f, (cx - 55, sh_y - 32, 110, 77)
+    f.front(cx, hip_y, legs=False,
+            arms=(('pts', (cx - 30, sh_y + 22), (cx - 3, sh_y + 14), -90),
+                  ('pts', (cx + 30, sh_y + 22), (cx + 3, sh_y + 14), -90)),
+            hi=[('fore', .05, .95)])
+    y = sh_y + 4
+    f.arrow((cx - 32, y), (cx - 12, y))
+    f.arrow((cx + 32, y), (cx + 12, y))
+    return f, (cx - 52, sh_y - 30, 104, 104 / ASPECT)
 
 
 def wrist_str():
     f = Fig()
-    hip = (64, 116)
-    j = f.side(hip=hip, torso=-90,
-               armN=('ang', 0, 0, -88),
-               armF=('to', (112, 82), -1, -115),
-               hi={'foreN': 0})
+    hip = (62, STAND)
+    j = f.person(hip, -90, armN=('ang', 0, 0, -84),
+                 armF=('to', (106, hip[1] - 33), -1, -105),
+                 hi=[('foreN', 0, .05, .95)])
     h = j['hN']
-    f.arrow((h[0] + 10, h[1] - 9), (h[0] - 8, h[1] - 9))
-    return f, (36, 30, 120, 84)
+    f.arrow((h[0] + 12, h[1] - 6), (h[0] - 6, h[1] - 6))
+    return f, (40, hip[1] - 62, 104, 104 / ASPECT)
 
 
 def test_bend():
-    f = Fig(); f.floor()
-    hip = (84, ON_FLOOR - LEN['thigh'] - LEN['shin'] + 1)
-    j = f.side(hip=hip, torso=8, head=96,
-               legN=('ang', 92, 90, 0), legF=('ang', 92, 90, 0),
-               armN=('ang', 88, 90, 90), armF=('ang', 86, 90, 90),
-               hi={'thighN': -1})
+    f = Fig()
+    hip = (84, STAND)
+    j = f.person(hip, 12, head=95, legN=('ang', 91, 90, 0), legF=('ang', 91, 90, 0),
+                 armN=('ang', 92, 92, 92), armF=('ang', 90, 91, 91),
+                 hi=[('thighN', -1, .08, .92)])
     tip = j['hN']
     x = tip[0] + 12
-    f.measure((x, tip[1] + 2.5), (x, GROUND), (x + 7, (tip[1] + GROUND) / 2 + 4), 'start')
+    f.measure((x, tip[1] + 1.5), (x, GROUND), (x + 6, (tip[1] + GROUND) / 2 + 4), 'start')
     return f
 
 
-def test_knee_wall():
-    f = Fig(); f.floor(); f.wall(150, 1)
-    ankle = (124, ON_FLOOR)
-    knee = (148, ankle[1] - math.sqrt(LEN['shin'] ** 2 - 24 ** 2))
+def test_knee():
+    f = Fig(mat=(40, 156)); f.wall(156, 1)
+    ankle = (128, ON_MAT)
+    knee = (152, ankle[1] - math.sqrt(LEN['shin'] ** 2 - 24 ** 2))
     hip = at(knee, 196, LEN['thigh'])
-    # Задняя нога стоит коленом на полу, голень лежит на полу.
-    dy = GROUND - WID['shin'] / 2 - hip[1]
+    # Задняя нога стоит коленом на коврике, голень лежит на нём.
+    dy = MAT_TOP - 3.7 - hip[1]
     back = math.degrees(math.atan2(dy, -math.sqrt(LEN['thigh'] ** 2 - dy * dy)))
-    j = f.side(hip=hip, torso=-82,
-               legN=('to', ankle, -1, 0), legF=('ang', back, 180, 180),
-               armN=('to', (146, hip[1] - 32), 1), armF=('to', (146, hip[1] - 28), 1),
-               hi={'shinN': -1})
-    x0 = j['tN'][0] + 3
-    f.measure((x0, GROUND + 5.5), (150, GROUND + 5.5), (x0 - 4, GROUND + 9.5), 'end', tick=3.5)
+    j = f.person(hip, -84, legN=('to', ankle, -1, 0), legF=('ang', back, 180, 180, 'up'),
+                 armN=('to', (153.5, hip[1] - 36), 1, -78), armF=('to', (153.5, hip[1] - 33), 1, -78),
+                 hi=[('shinN', -1, .04, .66)])
+    x0 = j['toeN'][0] + 2
+    f.measure((x0, GROUND + 4.5), (156, GROUND + 4.5), (x0 - 3, GROUND + 9), 'end', tick=3)
     return f
 
 
@@ -430,7 +598,7 @@ FIGS = {
     'shoulder-iso': shoulder_iso, 'shoulder-str': shoulder_str,
     'back-iso': back_iso, 'back-str': back_str,
     'wrist-iso': wrist_iso, 'wrist-str': wrist_str,
-    'test-bend': test_bend, 'test-knee': test_knee_wall,
+    'test-bend': test_bend, 'test-knee': test_knee,
 }
 
 
@@ -438,8 +606,8 @@ def render_all():
     out = {}
     for key, fn in FIGS.items():
         r = fn()
-        f, zoom = r if isinstance(r, tuple) else (r, None)
-        out[key] = f.svg(zoom)
+        f, view = r if isinstance(r, tuple) else (r, None)
+        out[key] = f.svg(view)
     return out
 
 
